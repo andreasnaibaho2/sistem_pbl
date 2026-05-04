@@ -14,7 +14,7 @@
         <p class="text-sm text-slate-400 mt-1 uppercase tracking-widest font-medium">Rekap nilai mahasiswa PBL</p>
     </div>
     @if($user->isManager() || $user->isDosen())
-    <a href="{{ route('penilaian.create') }}"
+    <a href="{{ auth()->user()->isManager() ? route('penilaian.manager.create') : route('penilaian.dosen.create') }}"
         class="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#004d4d] text-[#7fffd4] text-sm font-black hover:opacity-90 transition">
         <span class="material-symbols-outlined text-base">add</span>
         Input Nilai
@@ -40,7 +40,7 @@
                 <tr class="border-b border-gray-100">
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">No</th>
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Mahasiswa</th>
-                    <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Kelas</th>
+                    <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Proyek</th>
                     @if(!$user->isMahasiswa())
                     <th class="text-center px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Manager<br><span class="normal-case font-medium text-gray-300">55%</span></th>
                     <th class="text-center px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Dosen<br><span class="normal-case font-medium text-gray-300">45%</span></th>
@@ -64,7 +64,7 @@
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-sm text-slate-500 font-medium">{{ $p->kelas->nama_kelas ?? '-' }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-500 font-medium">{{ $p->mahasiswa->proyekAktif()?->judul_proyek ?? '-' }}</td>
 
                     @if(!$user->isMahasiswa())
                     <td class="px-6 py-4 text-center">

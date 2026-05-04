@@ -55,8 +55,8 @@
                     </td>
                     <td class="px-10 py-8 text-center">
                         @php
-                            $roleColor = $u->role === 'manager_proyek' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
-                            $roleLabel = $u->role === 'manager_proyek' ? 'Manager Proyek' : 'Dosen Pengampu';
+                            $roleColor = $u->role === 'manager_proyek' ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700';
+                            $roleLabel = $u->role === 'manager_proyek' ? 'Manager Proyek' : 'Dosen';
                         @endphp
                         <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $roleColor }}">{{ $roleLabel }}</span>
                     </td>
@@ -133,8 +133,8 @@
                     </td>
                     <td class="px-10 py-6 text-center">
                         @php
-                            $rc = $u->role === 'manager_proyek' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
-                            $rl = $u->role === 'manager_proyek' ? 'Manager Proyek' : 'Dosen Pengampu';
+                            $rc = $u->role === 'manager_proyek' ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700';
+                            $rl = $u->role === 'manager_proyek' ? 'Manager Proyek' : 'Dosen';
                         @endphp
                         <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $rc }}">{{ $rl }}</span>
                     </td>

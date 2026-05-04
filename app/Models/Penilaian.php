@@ -9,7 +9,7 @@ class Penilaian extends Model
     protected $table = 'penilaian';
 
     protected $fillable = [
-        'kelas_id', 'mahasiswa_id', 'dosen_id',
+        'mahasiswa_id', 'dosen_id', 'pengajuan_proyek_id',
 
         // Manager Proyek (55%)
         'ls_critical_thinking', 'ls_kolaborasi', 'ls_kreativitas', 'ls_komunikasi',
@@ -23,37 +23,29 @@ class Penilaian extends Model
         'la_penulisan', 'la_pilihan_kata', 'la_konten',
         'nilai_dosen', 'catatan_dosen',
 
-        // Nilai Akhir
         'nilai_akhir',
     ];
 
-    // =============================================
     // RELASI
-    // =============================================
-    public function kelas()     { return $this->belongsTo(Kelas::class); }
     public function mahasiswa() { return $this->belongsTo(Mahasiswa::class); }
     public function dosen()     { return $this->belongsTo(Dosen::class); }
+    public function proyek()    { return $this->belongsTo(PengajuanProyek::class, 'pengajuan_proyek_id'); }
 
-    // =============================================
     // HITUNG NILAI MANAGER (55%)
-    // =============================================
     public function hitungNilaiManager(): float
     {
-        // Learning Skills (20%) — 4 sub-aspek @ 5%
         $learningSkills =
             (($this->ls_critical_thinking ?? 0) * 0.05) +
             (($this->ls_kolaborasi        ?? 0) * 0.05) +
             (($this->ls_kreativitas       ?? 0) * 0.05) +
             (($this->ls_komunikasi        ?? 0) * 0.05);
 
-        // Life Skills (20%) — 4 sub-aspek @ 5%
         $lifeSkills =
             (($this->lf_fleksibilitas  ?? 0) * 0.05) +
             (($this->lf_kepemimpinan   ?? 0) * 0.05) +
             (($this->lf_produktivitas  ?? 0) * 0.05) +
             (($this->lf_social_skill   ?? 0) * 0.05);
 
-        // Laporan Project (15%) — 3 sub-aspek @ 5%
         $laporanProject =
             (($this->lp_rpp            ?? 0) * 0.05) +
             (($this->lp_logbook        ?? 0) * 0.05) +
@@ -62,26 +54,21 @@ class Penilaian extends Model
         return round($learningSkills + $lifeSkills + $laporanProject, 2);
     }
 
-    // =============================================
     // HITUNG NILAI DOSEN (45%)
-    // =============================================
     public function hitungNilaiDosen(): float
     {
-        // Literacy Skills (15%) — 3 sub-aspek @ 5%
         $literacy =
             (($this->lit_informasi  ?? 0) * 0.05) +
             (($this->lit_media      ?? 0) * 0.05) +
             (($this->lit_teknologi  ?? 0) * 0.05);
 
-        // Presentasi (15%) — 5 sub-aspek @ 3%
         $presentasi =
-            (($this->pr_konten     ?? 0) * 0.03) +
-            (($this->pr_visual     ?? 0) * 0.03) +
-            (($this->pr_kosakata   ?? 0) * 0.03) +
+            (($this->pr_konten      ?? 0) * 0.03) +
+            (($this->pr_visual      ?? 0) * 0.03) +
+            (($this->pr_kosakata    ?? 0) * 0.03) +
             (($this->pr_tanya_jawab ?? 0) * 0.03) +
-            (($this->pr_mata_gerak ?? 0) * 0.03);
+            (($this->pr_mata_gerak  ?? 0) * 0.03);
 
-        // Laporan Akhir (15%) — 3 sub-aspek @ 5%
         $laporanAkhir =
             (($this->la_penulisan    ?? 0) * 0.05) +
             (($this->la_pilihan_kata ?? 0) * 0.05) +
@@ -90,17 +77,12 @@ class Penilaian extends Model
         return round($literacy + $presentasi + $laporanAkhir, 2);
     }
 
-    // =============================================
-    // HITUNG NILAI AKHIR (Manager + Dosen)
-    // =============================================
+    // HITUNG NILAI AKHIR
     public function hitungNilaiAkhir(): float
     {
         return round(($this->nilai_manager ?? 0) + ($this->nilai_dosen ?? 0), 2);
     }
 
-    // =============================================
-    // HELPER: Grade dari nilai akhir
-    // =============================================
     public function getGrade(): string
     {
         $nilai = $this->nilai_akhir ?? 0;

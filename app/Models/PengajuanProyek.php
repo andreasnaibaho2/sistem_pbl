@@ -24,6 +24,7 @@ class PengajuanProyek extends Model
         'catatan_admin',
         'diproses_oleh',
         'diproses_at',
+        'dosen_pengampu_id',
     ];
 
     protected $casts = [
@@ -86,4 +87,12 @@ class PengajuanProyek extends Model
     {
         return $this->kebutuhan->sum('jumlah_mahasiswa');
     }
+    public function logbookHarian(): \Illuminate\Database\Eloquent\Relations\HasMany
+{
+    return $this->hasMany(LogbookHarian::class, 'pengajuan_proyek_id');
+}
+public function dosenPengampu()
+{
+    return $this->belongsTo(\App\Models\Dosen::class, 'dosen_pengampu_id');
+}
 }

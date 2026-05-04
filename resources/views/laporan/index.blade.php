@@ -43,7 +43,7 @@
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Mahasiswa</th>
                     @endif
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Jenis Laporan</th>
-                    <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Kelas</th>
+                    <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Proyek</th>
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Tanggal Upload</th>
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
                     <th class="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Aksi</th>
@@ -75,7 +75,7 @@
                         </span>
                     </td>
 
-                    <td class="px-6 py-4 text-sm text-slate-500 font-medium">{{ $l->kelas->nama_kelas ?? '-' }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-500 font-medium">{{ $l->proyek->judul_proyek ?? '-' }}</td>
                     <td class="px-6 py-4 text-xs text-slate-500 font-medium">{{ $l->created_at->format('d M Y') }}</td>
 
                     <td class="px-6 py-4">

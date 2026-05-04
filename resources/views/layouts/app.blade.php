@@ -42,31 +42,45 @@
 </head>
 <body class="bg-[#f4f7f6] font-sans text-gray-800 overflow-hidden h-screen flex">
 
+@php
+    $authUser   = auth()->user();
+    $roleEfektif = $authUser->getRoleEfektif();
+    $roleLabel  = match($roleEfektif) {
+        'admin'          => 'Administrator',
+        'manager_proyek' => 'Manager Proyek',
+        'dosen_pengampu' => 'Dosen Pengampu',
+        'mahasiswa'      => 'Mahasiswa',
+        default          => $roleEfektif,
+    };
+    $isDosen        = $authUser->role === 'dosen';
+    $roleAktif      = $authUser->role_aktif ?? 'dosen_pengampu';
+    $isDosenAsManager = $isDosen && $roleAktif === 'manager_proyek';
+    $isDosenAsDosen   = $isDosen && $roleAktif === 'dosen_pengampu';
+@endphp
+
     {{-- ================= SIDEBAR ================= --}}
     <aside class="w-72 bg-[#004d4d] text-white flex flex-col z-20 shadow-2xl flex-shrink-0 h-screen">
 
-      {{-- Logo --}}
-<div class="p-6 flex items-center gap-4 border-b border-white/10">
-    <img src="{{ asset('images/logo.png') }}" alt="AE Polman" class="w-16 h-16 object-contain flex-shrink-0">
-    <span class="text-3xl font-black tracking-tighter italic uppercase text-white">
-        PBL <span class="text-[#7fffd4]">PORTAL</span>
-    </span>
-</div>
+        {{-- Logo --}}
+        <div class="p-6 flex items-center gap-4 border-b border-white/10">
+            <img src="{{ asset('images/logo.png') }}" alt="AE Polman" class="w-16 h-16 object-contain flex-shrink-0">
+            <span class="text-3xl font-black tracking-tighter italic uppercase text-white">
+                PBL <span class="text-[#7fffd4]">PORTAL</span>
+            </span>
+        </div>
+
         {{-- Nav --}}
         <nav class="flex-1 px-4 space-y-1 mt-4 overflow-y-auto pb-6">
-
             @php $path = request()->path(); @endphp
 
-            @if(auth()->user()->isAdmin())
+            {{-- ADMIN --}}
+            @if($authUser->isAdmin())
                 <p class="px-4 text-[10px] uppercase tracking-[0.2em] text-[#7fffd4]/50 font-bold mb-3">Main Menu</p>
-
                 <a href="{{ route('dashboard') }}"
                    class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all
                    {{ $path === 'dashboard' ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
-                    <span class="material-symbols-outlined text-xl">dashboard</span>
-                    <span>Dashboard</span>
+                    <span class="material-symbols-outlined text-xl">dashboard</span><span>Dashboard</span>
                 </a>
-
                 @php $pendingCount = \App\Models\User::whereIn('role',['dosen','manager_proyek'])->where('status','pending')->count(); @endphp
                 <a href="{{ route('approval.index') }}"
                    class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all
@@ -79,41 +93,26 @@
                         @endif
                     </div>
                 </a>
-
-                @php
-                    $masterActive = str_starts_with($path,'mahasiswa') || str_starts_with($path,'dosen') || str_starts_with($path,'kelas') || str_starts_with($path,'admin/matkul') || str_starts_with($path,'admin/prodi');
-                @endphp
+                @php $masterActive = str_starts_with($path,'mahasiswa') || str_starts_with($path,'dosen') || str_starts_with($path,'admin/prodi') || str_starts_with($path,'admin/supervisi') || str_starts_with($path,'admin/matkul'); @endphp
                 <div x-data="{ open: {{ $masterActive ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all
-                        {{ $masterActive ? 'text-[#7fffd4]' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-xl">database</span>
-                            <span>Master Data</span>
-                        </div>
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all {{ $masterActive ? 'text-[#7fffd4]' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-xl">database</span><span>Master Data</span></div>
                         <span class="material-symbols-outlined text-sm transition-transform" :class="open ? 'rotate-90' : ''">chevron_right</span>
                     </button>
                     <div x-show="open" x-cloak class="ml-10 mt-1 space-y-1 border-l border-white/10 pl-3">
                         <a href="{{ route('mahasiswa.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'mahasiswa') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Mahasiswa</a>
                         <a href="{{ route('dosen.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'dosen') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Dosen</a>
-                        <a href="{{ route('kelas.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'kelas') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Kelas</a>
-                        <a href="{{ route('admin.matkul.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/matkul') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Mata Kuliah</a>
                         <a href="{{ route('admin.prodi.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/prodi') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Program Studi</a>
+                        <a href="{{ route('admin.matkul.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/matkul') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Mata Kuliah</a>
+<a href="{{ route('admin.supervisi.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/supervisi') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Supervisi Matkul</a>
                     </div>
                 </div>
-
                 <div class="h-px bg-white/5 my-3 mx-4"></div>
                 <p class="px-4 text-[10px] uppercase tracking-[0.2em] text-[#7fffd4]/50 font-bold mb-3">Academic & PBL</p>
-
                 @php $kurikulumActive = str_starts_with($path,'rubrik') || str_starts_with($path,'bobot'); @endphp
                 <div x-data="{ open: {{ $kurikulumActive ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all
-                        {{ $kurikulumActive ? 'text-[#7fffd4]' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-xl">menu_book</span>
-                            <span>Kurikulum PBL</span>
-                        </div>
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all {{ $kurikulumActive ? 'text-[#7fffd4]' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-xl">menu_book</span><span>Kurikulum PBL</span></div>
                         <span class="material-symbols-outlined text-sm transition-transform" :class="open ? 'rotate-90' : ''">chevron_right</span>
                     </button>
                     <div x-show="open" x-cloak class="ml-10 mt-1 space-y-1 border-l border-white/10 pl-3">
@@ -121,7 +120,6 @@
                         <a href="{{ route('bobot.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'bobot') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Bobot Penilaian</a>
                     </div>
                 </div>
-
                 @php $pendingProyek = \App\Models\PengajuanProyek::where('status','pending')->count(); @endphp
                 <a href="{{ route('pengajuan_proyek.index') }}"
                    class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all
@@ -134,23 +132,15 @@
                         @endif
                     </div>
                 </a>
-
                 <a href="{{ route('laporan.admin') }}"
                    class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all
                    {{ str_starts_with($path,'laporan-admin') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
-                    <span class="material-symbols-outlined text-xl">monitoring</span>
-                    <span>Monitoring & Laporan</span>
+                    <span class="material-symbols-outlined text-xl">monitoring</span><span>Monitoring & Laporan</span>
                 </a>
-
                 @php $asesmenActive = str_starts_with($path,'penilaian'); @endphp
                 <div x-data="{ open: {{ $asesmenActive ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all
-                        {{ $asesmenActive ? 'text-[#7fffd4]' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-xl">grade</span>
-                            <span>Asesmen & Nilai</span>
-                        </div>
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all {{ $asesmenActive ? 'text-[#7fffd4]' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-xl">grade</span><span>Asesmen & Nilai</span></div>
                         <span class="material-symbols-outlined text-sm transition-transform" :class="open ? 'rotate-90' : ''">chevron_right</span>
                     </button>
                     <div x-show="open" x-cloak class="ml-10 mt-1 space-y-1 border-l border-white/10 pl-3">
@@ -158,7 +148,8 @@
                     </div>
                 </div>
 
-            @elseif(auth()->user()->isManager())
+            {{-- DOSEN sebagai MANAGER PROYEK --}}
+            @elseif($isDosenAsManager)
                 <p class="px-4 text-[10px] uppercase tracking-[0.2em] text-[#7fffd4]/50 font-bold mb-3">Menu</p>
                 <a href="{{ route('dashboard') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ $path==='dashboard' ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">dashboard</span><span>Dashboard</span>
@@ -169,11 +160,22 @@
                 <a href="{{ route('pengajuan_proyek.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'pengajuan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">rocket_launch</span><span>Pengajuan Proyek</span>
                 </a>
-                <a href="{{ route('logbook.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'logbook') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
-                    <span class="material-symbols-outlined text-xl">fact_check</span><span>Verifikasi Logbook</span>
+                <a href="{{ route('logbook_mingguan.daftar_verifikasi') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'logbook-mingguan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                    <span class="material-symbols-outlined text-xl">rate_review</span><span>Verifikasi Logbook</span>
                 </a>
+                {{-- Switch role --}}
+                <div class="h-px bg-white/5 my-3 mx-4"></div>
+                <form action="{{ route('pilih.role.simpan') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="role_aktif" value="dosen_pengampu">
+                    <button type="submit" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-white/40 hover:bg-white/5 hover:text-[#7fffd4] transition-all">
+                        <span class="material-symbols-outlined text-xl">swap_horiz</span>
+                        <span class="text-xs">Ganti ke Dosen Pengampu</span>
+                    </button>
+                </form>
 
-            @elseif(auth()->user()->isDosen())
+            {{-- DOSEN sebagai DOSEN PENGAMPU --}}
+            @elseif($isDosenAsDosen)
                 <p class="px-4 text-[10px] uppercase tracking-[0.2em] text-[#7fffd4]/50 font-bold mb-3">Menu</p>
                 <a href="{{ route('dashboard') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ $path==='dashboard' ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">dashboard</span><span>Dashboard</span>
@@ -184,13 +186,40 @@
                 <a href="{{ route('laporan.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'laporan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">description</span><span>Verifikasi Laporan</span>
                 </a>
+                {{-- Switch role --}}
+                <div class="h-px bg-white/5 my-3 mx-4"></div>
+                <form action="{{ route('pilih.role.simpan') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="role_aktif" value="manager_proyek">
+                    <button type="submit" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-white/40 hover:bg-white/5 hover:text-[#7fffd4] transition-all">
+                        <span class="material-symbols-outlined text-xl">swap_horiz</span>
+                        <span class="text-xs">Ganti ke Manager Proyek</span>
+                    </button>
+                </form>
 
+            {{-- MANAGER PROYEK permanen --}}
+            @elseif($authUser->isManager())
+                <p class="px-4 text-[10px] uppercase tracking-[0.2em] text-[#7fffd4]/50 font-bold mb-3">Menu</p>
+                <a href="{{ route('dashboard') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ $path==='dashboard' ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                    <span class="material-symbols-outlined text-xl">dashboard</span><span>Dashboard</span>
+                </a>
+                <a href="{{ route('penilaian.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'penilaian') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                    <span class="material-symbols-outlined text-xl">grade</span><span>Penilaian</span>
+                </a>
+                <a href="{{ route('pengajuan_proyek.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'pengajuan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                    <span class="material-symbols-outlined text-xl">rocket_launch</span><span>Pengajuan Proyek</span>
+                </a>
+                <a href="{{ route('logbook_mingguan.daftar_verifikasi') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'logbook-mingguan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                    <span class="material-symbols-outlined text-xl">rate_review</span><span>Verifikasi Logbook</span>
+                </a>
+
+            {{-- MAHASISWA --}}
             @else
                 <p class="px-4 text-[10px] uppercase tracking-[0.2em] text-[#7fffd4]/50 font-bold mb-3">Menu</p>
                 <a href="{{ route('dashboard') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ $path==='dashboard' ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">dashboard</span><span>Dashboard</span>
                 </a>
-                <a href="{{ route('logbook.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'logbook') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
+                <a href="{{ route('logbook_harian.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'logbook') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">menu_book</span><span>Logbook</span>
                 </a>
                 <a href="{{ route('laporan.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'laporan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
@@ -203,26 +232,17 @@
                     <span class="material-symbols-outlined text-xl">forum</span><span>Feedback Hub</span>
                 </a>
             @endif
-
         </nav>
 
         {{-- User info di bawah sidebar --}}
         <div class="p-4 border-t border-white/10">
             <div class="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/5 transition">
                 <div class="w-10 h-10 rounded-xl bg-[#003d3d] border border-white/20 flex items-center justify-center font-black text-white text-sm flex-shrink-0">
-    {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
-</div>
+                    {{ strtoupper(substr($authUser->name, 0, 2)) }}
+                </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-black text-white truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-[10px] text-[#7fffd4]/50 uppercase tracking-widest font-bold">
-                        {{ match(auth()->user()->role) {
-                            'admin'          => 'Administrator',
-                            'manager_proyek' => 'Manager Proyek',
-                            'dosen'          => 'Dosen Pengampu',
-                            'mahasiswa'      => 'Mahasiswa',
-                            default          => auth()->user()->role
-                        } }}
-                    </p>
+                    <p class="text-sm font-black text-white truncate">{{ $authUser->name }}</p>
+                    <p class="text-[10px] text-[#7fffd4]/50 uppercase tracking-widest font-bold">{{ $roleLabel }}</p>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -239,24 +259,16 @@
 
         {{-- TOPBAR --}}
         <header class="bg-white border-b border-gray-100 px-8 h-16 flex items-center justify-between flex-shrink-0 shadow-sm">
-
-            {{-- Kiri: breadcrumb --}}
             <div>
                 <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">AE Polman Bandung</p>
                 <p class="text-xs font-black italic text-[#004d4d] uppercase">@yield('title', 'Dashboard')</p>
             </div>
-
-            {{-- Kanan --}}
             <div class="flex items-center gap-2">
-
-                {{-- Search --}}
                 <div class="relative mr-2">
                     <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 text-lg">search</span>
                     <input type="text" placeholder="Cari mahasiswa, proyek..."
                         class="pl-10 pr-5 py-2.5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#7fffd4] outline-none text-sm w-60 placeholder:text-gray-300">
                 </div>
-
-                {{-- Flash messages --}}
                 @if(session('success'))
                 <div class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-bold">
                     <span class="material-symbols-outlined text-sm">check_circle</span>
@@ -269,40 +281,23 @@
                     {{ session('error') }}
                 </div>
                 @endif
-
-                {{-- Notifikasi --}}
                 <button class="w-9 h-9 flex items-center justify-center rounded-2xl hover:bg-gray-50 transition text-gray-300 hover:text-[#004d4d] relative">
                     <span class="material-symbols-outlined text-xl">notifications</span>
                     <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-[#2dce89] rounded-full"></span>
                 </button>
-
-                {{-- Settings --}}
                 <button class="w-9 h-9 flex items-center justify-center rounded-2xl hover:bg-gray-50 transition text-gray-300 hover:text-[#004d4d]">
                     <span class="material-symbols-outlined text-xl">settings</span>
                 </button>
-
-                {{-- Divider --}}
                 <div class="w-px h-6 bg-gray-100 mx-1"></div>
-
-                {{-- User info --}}
                 <div class="flex items-center gap-3">
                     <div class="text-right">
-                        <p class="text-sm font-black text-[#004d4d] leading-tight">{{ auth()->user()->name }}</p>
-                        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                            {{ match(auth()->user()->role) {
-                                'admin'          => 'Administrator',
-                                'manager_proyek' => 'Manager Proyek',
-                                'dosen'          => 'Dosen Pengampu',
-                                'mahasiswa'      => 'Mahasiswa',
-                                default          => auth()->user()->role
-                            } }}
-                        </p>
+                        <p class="text-sm font-black text-[#004d4d] leading-tight">{{ $authUser->name }}</p>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">{{ $roleLabel }}</p>
                     </div>
                     <div class="w-9 h-9 rounded-2xl bg-[#004d4d] flex items-center justify-center text-white font-black text-sm flex-shrink-0">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        {{ strtoupper(substr($authUser->name, 0, 1)) }}
                     </div>
                 </div>
-
             </div>
         </header>
 

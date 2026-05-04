@@ -35,19 +35,19 @@
         <form action="{{ route('laporan.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
 
-            {{-- Kelas --}}
-            <div>
-                <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Kelas</label>
-                <select name="kelas_id"
-                    class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 text-sm text-[#004d4d] font-medium focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-300 transition">
-                    <option value="">-- Pilih Kelas --</option>
-                    @foreach($kelas as $k)
-                    <option value="{{ $k->id }}" {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
-                        {{ $k->nama_kelas }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
+            {{-- Proyek --}}
+<div>
+    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Proyek</label>
+    <select name="pengajuan_proyek_id"
+        class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 text-sm text-[#004d4d] font-medium focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-300 transition">
+        <option value="">-- Pilih Proyek --</option>
+        @foreach($proyekList as $p)
+        <option value="{{ $p->id }}" {{ old('pengajuan_proyek_id') == $p->id ? 'selected' : '' }}>
+            {{ $p->judul_proyek }}
+        </option>
+        @endforeach
+    </select>
+</div>
 
             {{-- Jenis Laporan --}}
             <div>

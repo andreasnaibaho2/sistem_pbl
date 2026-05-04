@@ -40,7 +40,6 @@
                 @foreach([
                     ['Mahasiswa',      $laporan->mahasiswa->nama ?? '-'],
                     ['NIM',            $laporan->mahasiswa->nim ?? '-'],
-                    ['Kelas',          $laporan->kelas->nama_kelas ?? '-'],
                     ['Tanggal Upload', $laporan->created_at->format('d M Y, H:i')],
                 ] as [$key, $val])
                 <div class="px-6 py-4 flex justify-between items-center">
@@ -82,7 +81,7 @@
 
     {{-- VERIFIKASI (Dosen) --}}
     <div>
-        @if(auth()->user()->isDosen() && ($laporan->status_verifikasi === null || $laporan->status_verifikasi === 'menunggu'))
+        @if(auth()->user()->isDosen() && in_array($laporan->status_verifikasi, [null, 'menunggu', 'pending']))
         <div class="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100">
                 <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Verifikasi Laporan</p>

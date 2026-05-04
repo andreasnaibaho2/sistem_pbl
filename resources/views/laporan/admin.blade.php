@@ -41,12 +41,12 @@
 {{-- FILTER --}}
 <div class="flex items-center gap-3 mb-5">
     <form method="GET" action="{{ route('laporan.admin') }}" class="flex items-center gap-3">
-        <select name="kelas_id" onchange="this.form.submit()"
+        <select name="proyek_id" onchange="this.form.submit()"
             class="px-5 py-3 bg-white border border-gray-100 rounded-2xl text-xs font-bold text-[#004d4d] focus:ring-2 focus:ring-[#7fffd4] outline-none shadow-sm">
-            <option value="">Semua Kelas</option>
-            @foreach($kelasList ?? [] as $k)
-            <option value="{{ $k->id }}" {{ request('kelas_id') == $k->id ? 'selected' : '' }}>
-                {{ $k->nama_kelas ?? $k->kode_kelas }}
+            <option value="">Semua Proyek</option>
+            @foreach($proyekList ?? [] as $p)
+            <option value="{{ $p->id }}" {{ request('proyek_id') == $p->id ? 'selected' : '' }}>
+                {{ $p->judul_proyek }}
             </option>
             @endforeach
         </select>
@@ -61,7 +61,7 @@
                 <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">#</th>
                 <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Mahasiswa</th>
                 <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">NIM</th>
-                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Kelas</th>
+                <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Prodi</th>
                 <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Nilai Manager (55%)</th>
                 <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Nilai Dosen (45%)</th>
                 <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Nilai Akhir</th>
@@ -82,7 +82,7 @@
                     </div>
                 </td>
                 <td class="px-8 py-5 font-mono text-xs font-bold text-gray-500">{{ $row->nim }}</td>
-                <td class="px-8 py-5 text-xs font-bold text-gray-500">{{ $row->kelas ?? '-' }}</td>
+                <td class="px-8 py-5 text-xs font-bold text-gray-500">{{ $row->prodi ?? '-' }}</td>
                 <td class="px-8 py-5 text-center">
                     <span class="font-black text-[#008080]">{{ $row->nilai_manager ?? '-' }}</span>
                 </td>
@@ -97,9 +97,7 @@
                         $grade = $row->grade ?? '-';
                         $gradeColor = match($grade) {
                             'A'  => 'bg-emerald-100 text-emerald-700',
-                            'AB' => 'bg-teal-100 text-teal-700',
                             'B'  => 'bg-blue-100 text-blue-700',
-                            'BC' => 'bg-cyan-100 text-cyan-700',
                             'C'  => 'bg-yellow-100 text-yellow-700',
                             'D'  => 'bg-orange-100 text-orange-700',
                             'E'  => 'bg-red-100 text-red-700',

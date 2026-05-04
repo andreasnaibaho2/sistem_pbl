@@ -50,6 +50,33 @@
         </div>
     </section>
 
+    {{-- SHORTCUT VERIFIKASI LOGBOOK --}}
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="{{ route('logbook_mingguan.daftar_verifikasi') }}"
+           class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-outline-variant/20 shadow-sm hover:-translate-y-0.5 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-100 transition-colors shrink-0">
+                <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1">rate_review</span>
+            </div>
+            <div>
+                <p class="font-bold text-sm text-on-surface">Verifikasi Logbook Mingguan</p>
+                <p class="text-xs text-slate-400 mt-0.5">Review & ACC rekap mingguan mahasiswa</p>
+            </div>
+            <span class="material-symbols-outlined text-slate-300 group-hover:text-indigo-400 ml-auto transition-colors">chevron_right</span>
+        </a>
+
+        <a href="{{ route('logbook_harian.rekap') }}"
+           class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-outline-variant/20 shadow-sm hover:-translate-y-0.5 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-primary group-hover:bg-teal-100 transition-colors shrink-0">
+                <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1">calendar_month</span>
+            </div>
+            <div>
+                <p class="font-bold text-sm text-on-surface">Rekap Logbook Harian</p>
+                <p class="text-xs text-slate-400 mt-0.5">Lihat aktivitas harian mahasiswa per minggu</p>
+            </div>
+            <span class="material-symbols-outlined text-slate-300 group-hover:text-primary ml-auto transition-colors">chevron_right</span>
+        </a>
+    </section>
+
     {{-- PROYEK LIST --}}
     <div class="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
@@ -80,7 +107,6 @@
                     <span class="text-[10px] font-bold px-3 py-1 rounded-full {{ $proyek->getStatusBadgeColor() }}">
                         {{ $proyek->getStatusLabel() }}
                     </span>
-                    {{-- Toggle mahasiswa --}}
                     @if($proyek->mahasiswa->count() > 0)
                     <button @click="open = !open"
                             class="text-xs font-semibold text-slate-400 hover:text-primary flex items-center gap-0.5 transition-colors">

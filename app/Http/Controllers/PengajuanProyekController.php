@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\PengajuanProyek;
 use App\Models\PengajuanProyekKebutuhan;
@@ -15,11 +16,11 @@ class PengajuanProyekController extends Controller
         $user = auth()->user();
 
         if ($user->isAdmin()) {
-            $pengajuan = PengajuanProyek::with(['manager', 'kebutuhan', 'mahasiswa'])
+            $pengajuan = PengajuanProyek::with(['manager', 'kebutuhan', 'mahasiswa', 'dosenPengampu.user'])
                 ->latest()
                 ->get();
         } else {
-            $pengajuan = PengajuanProyek::with(['manager', 'kebutuhan', 'mahasiswa'])
+            $pengajuan = PengajuanProyek::with(['manager', 'kebutuhan', 'mahasiswa', 'dosenPengampu.user'])
                 ->where('manager_id', $user->id)
                 ->latest()
                 ->get();
@@ -80,7 +81,6 @@ class PengajuanProyekController extends Controller
     {
         $user = auth()->user();
 
-        // Mahasiswa hanya boleh lihat proyek yang dia ikuti
         if ($user->isMahasiswa()) {
             $mhs = $user->mahasiswa;
             abort_unless(
@@ -89,9 +89,10 @@ class PengajuanProyekController extends Controller
             );
         }
 
-        $pengajuan_proyek->load(['manager', 'kebutuhan', 'mahasiswa', 'diprosesOleh']);
+        $pengajuan_proyek->load(['manager', 'kebutuhan', 'mahasiswa', 'diprosesOleh', 'dosenPengampu.user']);
         return view('pengajuan_proyek.show', compact('pengajuan_proyek'));
     }
+
     public function approve(Request $request, PengajuanProyek $pengajuan_proyek)
     {
         $request->validate([
@@ -126,15 +127,14 @@ class PengajuanProyekController extends Controller
             ->with('success', 'Pengajuan proyek berhasil ditolak.');
     }
 
-    // Form pilih mahasiswa
+    // Form assign mahasiswa
     public function assignMahasiswa(PengajuanProyek $pengajuan_proyek)
     {
         abort_if(!auth()->user()->isAdmin(), 403);
         abort_if($pengajuan_proyek->status !== 'approved', 403);
 
-        $pengajuan_proyek->load(['kebutuhan', 'mahasiswa']);
+        $pengajuan_proyek->load(['kebutuhan', 'mahasiswa', 'dosenPengampu.user']);
 
-        // Ambil mahasiswa per prodi sesuai kebutuhan
         $mahasiswaPerProdi = [];
         foreach ($pengajuan_proyek->kebutuhan as $kebutuhan) {
             $mahasiswaPerProdi[$kebutuhan->prodi] = Mahasiswa::whereHas('user', function ($q) use ($kebutuhan) {
@@ -142,7 +142,12 @@ class PengajuanProyekController extends Controller
             })->get();
         }
 
-        return view('pengajuan_proyek.assign', compact('pengajuan_proyek', 'mahasiswaPerProdi'));
+        // Daftar dosen aktif untuk assign dosen pengampu
+        $dosenList = Dosen::whereHas('user', function ($q) {
+            $q->where('status', 'active');
+        })->with('user')->get();
+
+        return view('pengajuan_proyek.assign', compact('pengajuan_proyek', 'mahasiswaPerProdi', 'dosenList'));
     }
 
     // Simpan pilihan mahasiswa
@@ -151,11 +156,11 @@ class PengajuanProyekController extends Controller
         abort_if(!auth()->user()->isAdmin(), 403);
 
         $request->validate([
-            'mahasiswa'         => 'required|array|min:1',
-            'mahasiswa.*'       => 'exists:mahasiswa,id',
+            'mahasiswa'           => 'required|array|min:1',
+            'mahasiswa.*'         => 'exists:mahasiswa,id',
+            'dosen_pengampu_id'   => 'nullable|exists:dosen,id',
         ]);
 
-        // Reset dulu lalu sync
         $pengajuan_proyek->mahasiswa()->detach();
 
         foreach ($request->mahasiswa as $mahasiswaId) {
@@ -165,13 +170,18 @@ class PengajuanProyekController extends Controller
             ]);
         }
 
+        // Simpan dosen pengampu jika dipilih
+        $pengajuan_proyek->update([
+            'dosen_pengampu_id' => $request->dosen_pengampu_id,
+        ]);
+
         return redirect()->route('pengajuan_proyek.show', $pengajuan_proyek)
-            ->with('success', 'Mahasiswa berhasil ditugaskan ke proyek!');
+            ->with('success', 'Mahasiswa & Dosen Pengampu berhasil ditugaskan!');
     }
 
     public function proyekPbl()
     {
-        $proyek = PengajuanProyek::with(['manager', 'kebutuhan', 'mahasiswa'])
+        $proyek = PengajuanProyek::with(['manager', 'kebutuhan', 'mahasiswa', 'dosenPengampu.user'])
             ->where('status', 'approved')
             ->latest('diproses_at')
             ->get();

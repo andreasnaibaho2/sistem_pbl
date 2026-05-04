@@ -250,6 +250,12 @@
                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Manager</span>
                         <span class="text-xs font-bold text-gray-600">{{ $pengajuan_proyek->manager->name ?? '-' }}</span>
                     </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dosen Pengampu</span>
+                        <span class="text-xs font-bold text-gray-600">
+                            {{ $pengajuan_proyek->dosenPengampu->user->name ?? '-' }}
+                        </span>
+                    </div>
                 </div>
             </div>
 

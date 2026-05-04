@@ -9,7 +9,7 @@
             <h2 class="text-2xl font-extrabold tracking-tight text-on-surface">Dashboard Dosen Pengampu</h2>
             <p class="text-sm text-slate-500 mt-1">Selamat datang, <span class="font-semibold text-primary">{{ auth()->user()->name }}</span>. Verifikasi laporan dan penilaian mahasiswa.</p>
         </div>
-        <a href="{{ route('penilaian.create') }}"
+        <a href="{{ route('penilaian.dosen.create') }}"
            class="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-primary to-emerald-800 text-white font-semibold rounded-lg text-sm shadow-lg hover:opacity-90 transition-all w-fit">
             <span class="material-symbols-outlined text-sm">add</span> Input Penilaian
         </a>

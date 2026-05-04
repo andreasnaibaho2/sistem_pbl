@@ -2,59 +2,77 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Penilaian;
-use App\Models\Kelas;
 use App\Models\Mahasiswa;
+use App\Models\PenilaianManager;
+use App\Models\PenilaianDosen;
+use App\Models\PengajuanProyek;
 use Illuminate\Http\Request;
 
 class LaporanAdminController extends Controller
 {
     public function index(Request $request)
     {
-        $kelasId   = $request->get('kelas_id');
-        $kelasList = Kelas::orderBy('nama_kelas')->get();
+        $proyekId   = $request->get('proyek_id');
+        $proyekList = PengajuanProyek::where('status', 'approved')->orderBy('judul_proyek')->get();
 
-        $query = Penilaian::with(['mahasiswa', 'kelas']);
+        // Ambil semua mahasiswa dengan relasi penilaian
+        $mahasiswaList = Mahasiswa::with(['user', 'penilaianManager', 'penilaianDosen'])->get();
 
-        if ($kelasId) {
-            $query->where('kelas_id', $kelasId);
-        }
+        $mahasiswaRekap = $mahasiswaList->map(function ($m) use ($proyekId) {
+            $pm = $proyekId
+                ? $m->penilaianManager->where('pengajuan_proyek_id', $proyekId)->first()
+                : $m->penilaianManager->first();
 
-        $penilaianList = $query->orderBy('kelas_id')->get();
+            $pd = $m->penilaianDosen->first();
 
-        // Map ke format yang dipakai view
-        $mahasiswaRekap = $penilaianList->map(function ($p) {
+            $nilaiManager = $pm?->nilai_manager ?? null;
+            $nilaiDosen   = $pd?->nilai_dosen   ?? null;
+
+            // Skip mahasiswa tanpa penilaian apapun
+            if ($nilaiManager === null && $nilaiDosen === null) {
+                return null;
+            }
+
+            $nilaiAkhir = round(($nilaiManager ?? 0) + ($nilaiDosen ?? 0), 1);
+
+            $grade = match(true) {
+                $nilaiAkhir >= 85 => 'A',
+                $nilaiAkhir >= 75 => 'B',
+                $nilaiAkhir >= 65 => 'C',
+                $nilaiAkhir >= 55 => 'D',
+                default           => 'E',
+            };
+
             return (object)[
-                'nama'          => $p->mahasiswa?->nama ?? '-',
-                'nim'           => $p->mahasiswa?->nim ?? '-',
-                'kelas'         => $p->kelas?->nama_kelas ?? $p->kelas?->kode_kelas ?? '-',
-                'nilai_manager' => $p->nilai_manager ? round($p->nilai_manager, 1) : null,
-                'nilai_dosen'   => $p->nilai_dosen   ? round($p->nilai_dosen, 1)   : null,
-                'nilai_akhir'   => $p->nilai_akhir   ? round($p->nilai_akhir, 1)   : null,
-                'grade'         => $p->getGrade(),
+                'nama'          => $m->nama,
+                'nim'           => $m->nim,
+                'prodi'         => $m->user?->prodi ?? '-',
+                'nilai_manager' => $nilaiManager !== null ? round($nilaiManager, 1) : null,
+                'nilai_dosen'   => $nilaiDosen   !== null ? round($nilaiDosen, 1)   : null,
+                'nilai_akhir'   => $nilaiAkhir,
+                'grade'         => $grade,
             ];
-        });
+        })->filter()->values();
 
         $totalMahasiswa = Mahasiswa::count();
-        $sudahDinilai   = $penilaianList->filter(fn($p) => $p->nilai_akhir > 0)->count();
+        $sudahDinilai   = $mahasiswaRekap->filter(fn($r) => $r->nilai_akhir !== null)->count();
         $belumDinilai   = $totalMahasiswa - $sudahDinilai;
 
-        // Export CSV
         if ($request->get('export')) {
-            return $this->exportExcel($penilaianList, $kelasId, $kelasList);
+            return $this->exportCsv($mahasiswaRekap);
         }
 
         return view('laporan.admin', compact(
             'mahasiswaRekap',
-            'kelasList',
-            'kelasId',
+            'proyekList',
+            'proyekId',
             'totalMahasiswa',
             'sudahDinilai',
             'belumDinilai'
         ));
     }
 
-    private function exportExcel($penilaianList, $kelasId, $kelasList)
+    private function exportCsv($mahasiswaRekap)
     {
         $filename = 'rekap-nilai-pbl-' . date('Ymd-His') . '.csv';
 
@@ -63,25 +81,25 @@ class LaporanAdminController extends Controller
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function () use ($penilaianList) {
+        $callback = function () use ($mahasiswaRekap) {
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, [
-                'No', 'NIM', 'Nama Mahasiswa', 'Kelas',
+                'No', 'NIM', 'Nama Mahasiswa', 'Program Studi',
                 'Nilai Manager (55%)', 'Nilai Dosen (45%)', 'Nilai Akhir', 'Grade'
             ]);
 
-            foreach ($penilaianList as $i => $p) {
+            foreach ($mahasiswaRekap as $i => $r) {
                 fputcsv($file, [
                     $i + 1,
-                    $p->mahasiswa?->nim  ?? '-',
-                    $p->mahasiswa?->nama ?? '-',
-                    $p->kelas?->nama_kelas ?? '-',
-                    $p->nilai_manager ? number_format($p->nilai_manager, 2) : '0',
-                    $p->nilai_dosen   ? number_format($p->nilai_dosen, 2)   : '0',
-                    $p->nilai_akhir   ? number_format($p->nilai_akhir, 2)   : '0',
-                    $p->getGrade(),
+                    $r->nim,
+                    $r->nama,
+                    $r->prodi,
+                    $r->nilai_manager ?? '0',
+                    $r->nilai_dosen   ?? '0',
+                    $r->nilai_akhir   ?? '0',
+                    $r->grade         ?? '-',
                 ]);
             }
 

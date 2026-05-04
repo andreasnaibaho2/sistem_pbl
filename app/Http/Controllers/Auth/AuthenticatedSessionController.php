@@ -26,8 +26,9 @@ class AuthenticatedSessionController extends Controller
 {
     $request->authenticate();
 
-    // Cek status pending
     $user = auth()->user();
+
+    // Cek status pending
     if ($user->status === 'pending') {
         auth()->logout();
         return back()->withErrors([
@@ -36,12 +37,14 @@ class AuthenticatedSessionController extends Controller
     }
 
     $request->session()->regenerate();
+
+    // Dosen → redirect ke halaman pilih role
+    if ($user->role === 'dosen') {
+        return redirect()->route('pilih.role');
+    }
+
     return redirect()->intended(route('dashboard', absolute: false));
 }
-
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

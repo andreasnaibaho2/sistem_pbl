@@ -59,7 +59,7 @@
             <p class="text-secondary text-[10px] font-black uppercase tracking-widest mb-1">Progres Monitoring</p>
             @php
                 $total   = $stats['total_mahasiswa'] ?: 1;
-                $dinilai = \App\Models\Penilaian::whereNotNull('nilai_akhir')->count();
+                $dinilai = \App\Models\PenilaianDosen::whereNotNull('nilai_dosen')->count();
                 $pct     = round(($dinilai / $total) * 100);
             @endphp
             <h2 class="text-5xl font-black italic text-primary">{{ $pct }}%</h2>
@@ -101,16 +101,12 @@
                 </div>
             </div>
 
-            {{-- Kelas Tabs --}}
-            <div class="flex bg-surface-container-low p-1 rounded-xl gap-1" id="kelasTabs">
-                @foreach(['AEC 1','AEC 2','AEC 3','AEC 4'] as $tab)
-                <button onclick="filterKelas('{{ $tab }}')"
-                    class="kelas-tab px-5 py-2.5 rounded-lg text-xs font-black transition-all text-on-surface-variant hover:text-primary"
-                    data-kelas="{{ $tab }}"
-                    id="tab-{{ str_replace(' ','-',$tab) }}">
-                    {{ $tab }}
-                </button>
-                @endforeach
+            {{-- Search --}}
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+                <input type="text" id="searchInput" oninput="filterSearch()"
+                    placeholder="Cari mahasiswa..."
+                    class="pl-9 pr-4 py-2.5 rounded-xl border border-outline-variant/30 text-xs font-medium text-on-surface bg-surface-container-low focus:outline-none focus:border-primary w-48">
             </div>
         </div>
 
@@ -127,6 +123,7 @@
             <tr class="border-b border-outline-variant/10">
                 <th class="px-7 py-5 text-[10px] font-black uppercase tracking-widest text-outline">Mahasiswa</th>
                 <th class="px-7 py-5 text-[10px] font-black uppercase tracking-widest text-outline">NIM</th>
+                <th class="px-7 py-5 text-[10px] font-black uppercase tracking-widest text-outline">Prodi</th>
                 <th class="px-7 py-5 text-[10px] font-black uppercase tracking-widest text-outline">Nilai Supervisi</th>
                 <th class="px-7 py-5 text-[10px] font-black uppercase tracking-widest text-outline">Nilai Proyek</th>
                 <th class="px-7 py-5 text-[10px] font-black uppercase tracking-widest text-outline text-center">Aksi</th>
@@ -136,7 +133,7 @@
             @forelse($mahasiswaData as $s)
             <tr class="mahasiswa-row hover:bg-surface-container-lowest transition-colors group"
                 data-prodi="{{ $s['prodi'] }}"
-                data-kelas="{{ $s['kelas'] }}">
+                data-name="{{ strtolower($s['name']) }}">
                 <td class="px-7 py-5">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary font-black text-xs border border-primary-container">
@@ -146,6 +143,11 @@
                     </div>
                 </td>
                 <td class="px-7 py-5 text-sm font-medium text-on-surface-variant font-mono">{{ $s['nim'] ?? '-' }}</td>
+                <td class="px-7 py-5">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary-container text-primary">
+                        {{ singkatProdi($s['prodi']) }}
+                    </span>
+                </td>
                 <td class="px-7 py-5">
                     <span class="font-black text-primary">{{ $s['nilai_supervisi'] ?? '-' }}</span>
                 </td>
@@ -163,7 +165,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="5" class="px-7 py-20 text-center text-on-surface-variant/40 font-black italic">
+                <td colspan="6" class="px-7 py-20 text-center text-on-surface-variant/40 font-black italic">
                     Belum ada data mahasiswa.
                 </td>
             </tr>
@@ -174,7 +176,7 @@
     {{-- Empty State --}}
     <div id="emptyState" class="hidden px-7 py-20 text-center">
         <span class="material-symbols-outlined text-5xl text-outline-variant mb-3 block">person_search</span>
-        <p class="text-on-surface-variant/50 font-black italic text-sm">Belum ada mahasiswa di kelas ini.</p>
+        <p class="text-on-surface-variant/50 font-black italic text-sm">Tidak ada mahasiswa ditemukan.</p>
     </div>
 </div>
 
@@ -182,15 +184,6 @@
 
 @push('scripts')
 <script>
-const allStudents = @json($mahasiswaData);
-
-const prodiMap = {
-    'informatika': ['AEC 1','AEC 2','AEC 3','AEC 4'],
-    'otomasi':     ['AEB 1','AEB 2','AEB 3','AEB 4'],
-    'mekatronika': ['AEA 1','AEA 2','AEA 3','AEA 4'],
-    'semua':       ['AEC 1','AEC 2','AEC 3','AEC 4'],
-};
-
 const prodiLabels = {
     'semua':       'Semua Prodi',
     'informatika': 'D4 TRIN - Teknologi Rekayasa Informatika Industri',
@@ -199,51 +192,32 @@ const prodiLabels = {
 };
 
 let currentProdi = 'semua';
-let currentKelas = 'AEC 1';
 
-function filterProdi(prodi) {
-    currentProdi = prodi;
-    document.getElementById('prodiLabel').textContent = prodiLabels[prodi];
-    document.getElementById('prodiDropdown').classList.add('hidden');
-
-    const tabs = prodiMap[prodi];
-    const tabsContainer = document.getElementById('kelasTabs');
-    tabsContainer.innerHTML = '';
-    tabs.forEach(tab => {
-        const btn = document.createElement('button');
-        btn.textContent = tab;
-        btn.className = 'kelas-tab px-5 py-2.5 rounded-lg text-xs font-black transition-all text-on-surface-variant hover:text-primary';
-        btn.dataset.kelas = tab;
-        btn.id = 'tab-' + tab.replace(' ', '-');
-        btn.onclick = () => filterKelas(tab);
-        tabsContainer.appendChild(btn);
-    });
-
-    filterKelas(tabs[0]);
-}
-
-function filterKelas(kelas) {
-    currentKelas = kelas;
-
-    document.querySelectorAll('.kelas-tab').forEach(btn => {
-        const isActive = btn.dataset.kelas === kelas;
-        btn.style.background = isActive ? '#004d4d' : '';
-        btn.style.color = isActive ? '#7fffd4' : '';
-        btn.classList.toggle('shadow-lg', isActive);
-    });
-
+function applyFilter() {
+    const searchVal = (document.getElementById('searchInput')?.value || '').toLowerCase();
     const rows = document.querySelectorAll('.mahasiswa-row');
     let visible = 0;
 
     rows.forEach(row => {
-        const matchKelas = row.dataset.kelas === kelas;
         const matchProdi = currentProdi === 'semua' || row.dataset.prodi === currentProdi;
-        const show = matchKelas && matchProdi;
+        const matchSearch = !searchVal || row.dataset.name.includes(searchVal);
+        const show = matchProdi && matchSearch;
         row.style.display = show ? '' : 'none';
         if (show) visible++;
     });
 
     document.getElementById('emptyState').classList.toggle('hidden', visible > 0);
+}
+
+function filterProdi(prodi) {
+    currentProdi = prodi;
+    document.getElementById('prodiLabel').textContent = prodiLabels[prodi];
+    document.getElementById('prodiDropdown').classList.add('hidden');
+    applyFilter();
+}
+
+function filterSearch() {
+    applyFilter();
 }
 
 function exportCSV() {
@@ -262,7 +236,7 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    filterKelas('AEC 1');
+    applyFilter();
 });
 </script>
-@endpushd
+@endpush

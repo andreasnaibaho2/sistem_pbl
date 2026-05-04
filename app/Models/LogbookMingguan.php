@@ -6,13 +6,38 @@ use Illuminate\Database\Eloquent\Model;
 
 class LogbookMingguan extends Model
 {
-    protected $table    = 'logbook_mingguan';
+    protected $table = 'logbook_mingguan';
+
     protected $fillable = [
-        'kode_logbook','mahasiswa_id','kelas_id','minggu_ke',
-        'tanggal','aktivitas','kendala','solusi',
-        'status_verifikasi','catatan_dosen'
+        'mahasiswa_id',
+        'pengajuan_proyek_id',
+        'minggu_ke',
+        'pdf_path',
+        'status',
+        'catatan_dosen',
+        'diajukan_at',
+        'diverifikasi_at',
     ];
 
-    public function mahasiswa() { return $this->belongsTo(Mahasiswa::class); }
-    public function kelas()     { return $this->belongsTo(Kelas::class); }
+    protected $casts = [
+        'diajukan_at'     => 'datetime',
+        'diverifikasi_at' => 'datetime',
+    ];
+
+    public function mahasiswa()
+    {
+        return $this->belongsTo(Mahasiswa::class, 'mahasiswa_id');
+    }
+
+    public function proyek()
+    {
+        return $this->belongsTo(PengajuanProyek::class, 'pengajuan_proyek_id');
+    }
+
+    public function logbookHarian()
+    {
+        return $this->hasMany(LogbookHarian::class, 'mahasiswa_id', 'mahasiswa_id')
+                    ->where('pengajuan_proyek_id', $this->pengajuan_proyek_id)
+                    ->where('minggu_ke', $this->minggu_ke);
+    }
 }

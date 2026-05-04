@@ -9,14 +9,18 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string ...$roles): mixed
     {
-        if (!auth()->check()) {
+        $user = auth()->user();
+
+        if (!$user) {
             return redirect('/login');
         }
 
-        if (!in_array(auth()->user()->role, $roles)) {
-            abort(403, 'Akses ditolak.');
+        $roleEfektif = $user->getRoleEfektif();
+
+        if (in_array($roleEfektif, $roles) || in_array($user->role, $roles)) {
+            return $next($request);
         }
 
-        return $next($request);
+        abort(403, 'Akses ditolak.');
     }
 }

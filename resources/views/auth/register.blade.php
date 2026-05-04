@@ -108,7 +108,7 @@
                 {{-- ROLE --}}
 <div>
     <label class="block text-sm font-bold text-[#004d4d] mb-2">Daftar Sebagai</label>
-    <div class="grid grid-cols-3 gap-3">
+    <div class="grid grid-cols-2 gap-3">
         <button type="button" onclick="setRole('mahasiswa')"
             id="role-mahasiswa"
             class="role-btn active flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#008080] bg-[#f0fdfa] text-[#004d4d]">
@@ -119,13 +119,7 @@
             id="role-dosen"
             class="role-btn flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 bg-white text-gray-400">
             <span class="material-symbols-outlined text-xl">co_present</span>
-            <span class="font-bold text-xs text-center leading-tight">Dosen Pengampu</span>
-        </button>
-        <button type="button" onclick="setRole('manager_proyek')"
-            id="role-manager_proyek"
-            class="role-btn flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-gray-100 bg-white text-gray-400">
-            <span class="material-symbols-outlined text-xl">manage_accounts</span>
-            <span class="font-bold text-xs text-center leading-tight">Manager Proyek</span>
+            <span class="font-bold text-xs text-center leading-tight">Dosen</span>
         </button>
     </div>
     <input type="hidden" name="role" id="roleInput" value="mahasiswa">
@@ -236,7 +230,7 @@ const kelasMap = {
 function setRole(role) {
     document.getElementById('roleInput').value = role;
 
-    ['mahasiswa','dosen','manager_proyek'].forEach(r => {
+    ['mahasiswa','dosen'].forEach(r => {
         const btn = document.getElementById('role-' + r);
         if (!btn) return;
         btn.classList.remove('active','border-[#008080]','bg-[#f0fdfa]','text-[#004d4d]');
@@ -248,15 +242,13 @@ function setRole(role) {
     active.classList.remove('border-gray-100','bg-white','text-gray-400');
 
     const isMhs = role === 'mahasiswa';
-    const isDosen = role === 'dosen' || role === 'manager_proyek';
 
     document.getElementById('prodiSection').classList.toggle('hidden', !isMhs);
     document.getElementById('kelasSection').classList.toggle('hidden', true);
-    document.getElementById('dosenInfo').classList.toggle('hidden', !isDosen);
+    document.getElementById('dosenInfo').classList.toggle('hidden', isMhs);
     document.getElementById('nimLabel').textContent = isMhs ? 'NIM' : 'NIDN';
     document.getElementById('nimInput').placeholder = isMhs ? '23010xxx' : '19880xxx';
 
-    // Reset prodi & kelas
     document.getElementById('prodiInput').value = '';
     document.getElementById('kelasInput').value = '';
     document.querySelectorAll('.prodi-btn').forEach(b => {
@@ -278,7 +270,6 @@ function setProdi(prodi) {
     active.classList.add('active','border-[#7fffd4]','bg-[#f0fdfa]','text-[#004d4d]');
     active.classList.remove('border-gray-100','bg-white','text-gray-400');
 
-    // Render kelas
     const grid = document.getElementById('kelasGrid');
     grid.innerHTML = '';
     kelasMap[prodi].forEach(kls => {
