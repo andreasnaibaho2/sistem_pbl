@@ -7,8 +7,12 @@
 {{-- HEADER --}}
 <div class="flex items-center justify-between mb-8">
     <div>
-        <h1 class="text-2xl font-black text-on-surface tracking-tight">Dashboard</h1>
-        <p class="text-sm text-on-surface-variant mt-0.5">Selamat datang, {{ auth()->user()->name }}</p>
+        <h1 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
+    Dashboard <span class="text-[#2dce89]">Admin</span>
+</h1>
+<p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
+    Selamat datang, {{ auth()->user()->name }}
+</p>
     </div>
     <div class="flex items-center gap-3">
         @if(($stats['pending_dosen'] ?? 0) > 0)
@@ -145,7 +149,12 @@
                 <td class="px-7 py-5 text-sm font-medium text-on-surface-variant font-mono">{{ $s['nim'] ?? '-' }}</td>
                 <td class="px-7 py-5">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary-container text-primary">
-                        {{ singkatProdi($s['prodi']) }}
+                        {{ match($s['prodi']) {
+    'informatika' => 'TRIN',
+    'otomasi'     => 'TRO',
+    'mekatronika' => 'TRMO',
+    default       => strtoupper($s['prodi'] ?? '-')
+} }}
                     </span>
                 </td>
                 <td class="px-7 py-5">

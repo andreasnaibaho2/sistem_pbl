@@ -110,7 +110,38 @@
         </div>
         @endforelse
     </div>
+    {{-- SUPERVISI SAYA --}}
+    <div class="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h4 class="text-sm font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings:'FILL' 1">school</span>
+                Supervisi Saya
+            </h4>
+            <span class="text-xs text-slate-400">{{ $supervisiList->count() }} matkul</span>
+        </div>
 
+        @forelse($supervisiList as $s)
+        <div class="px-6 py-4 border-b border-slate-50 last:border-0">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-primary shrink-0">
+                    <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1">menu_book</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-on-surface text-sm">{{ $s->mataKuliah->nama_matkul ?? '-' }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ $s->mataKuliah->kode_matkul ?? '' }} · {{ $s->mataKuliah->sks ?? '' }} SKS</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-xs font-semibold text-on-surface">{{ $s->dosen->nama_dosen ?? '-' }}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Dosen Pengampu</p>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="px-6 py-10 text-center text-slate-300 text-sm">
+            Belum ada supervisi yang ditugaskan.
+        </div>
+        @endforelse
+    </div>
     {{-- LOGBOOK HARIAN TERBARU --}}
     <div class="bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pilih Mahasiswa & Dosen Pengampu')
+@section('title', 'Pilih Mahasiswa')
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-8">
@@ -8,41 +8,19 @@
     {{-- Header --}}
     <div>
         <h1 class="text-3xl font-black uppercase tracking-tight text-[#004d4d]">
-            Pilih <span style="color:#2dce89;">Mahasiswa & Dosen</span>
+            Pilih <span style="color:#2dce89;">Mahasiswa</span>
         </h1>
         <p class="text-sm text-gray-400 mt-1">{{ $pengajuan_proyek->judul_proyek }} &mdash; {{ $pengajuan_proyek->kode_pengajuan }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">
+            Dosen Pengampu: <span class="font-black text-[#004d4d]">{{ $pengajuan_proyek->manager->name }}</span>
+            <span class="text-gray-300 mx-1">·</span> otomatis dari pengaju proyek
+        </p>
     </div>
 
     <form action="{{ route('pengajuan_proyek.simpan_mahasiswa', $pengajuan_proyek) }}" method="POST">
         @csrf
 
-        {{-- ====== SECTION: DOSEN PENGAMPU ====== --}}
-        <div class="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                    <p class="font-black text-[#004d4d] text-base">Dosen Pengampu</p>
-                    <p class="text-xs text-gray-400 mt-0.5">Pilih dosen yang mengampu proyek ini (opsional)</p>
-                </div>
-                <span class="px-3 py-1 rounded-xl text-xs font-black bg-indigo-600 text-white uppercase tracking-widest">Dosen</span>
-            </div>
-            <div class="p-6">
-                <select name="dosen_pengampu_id"
-                    class="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:border-indigo-400 transition">
-                    <option value="">-- Belum ditentukan --</option>
-                    @foreach($dosenList as $dosen)
-                        <option value="{{ $dosen->id }}"
-                            {{ optional($pengajuan_proyek->dosenPengampu)->id === $dosen->id ? 'selected' : '' }}>
-                            {{ $dosen->user->name }}
-                            @if($dosen->user->prodi)
-                                ({{ labelProdi($dosen->user->prodi) }})
-                            @endif
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-
-        {{-- ====== SECTION: MAHASISWA PER PRODI ====== --}}
+        {{-- SECTION: MAHASISWA PER PRODI --}}
         @foreach($pengajuan_proyek->kebutuhan as $kebutuhan)
         @php
             $prodi = $kebutuhan->prodi;

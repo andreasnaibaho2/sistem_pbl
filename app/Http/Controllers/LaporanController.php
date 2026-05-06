@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LaporanMkPpi;
 use App\Models\PengajuanProyek;
+use App\Models\SupervisiMatkul;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,21 +15,32 @@ class LaporanController extends Controller
         $user = auth()->user();
 
         if ($user->isMahasiswa()) {
+            $mhsId = $user->mahasiswa->id;
+
+            $supervisiDosen = SupervisiMatkul::where('mahasiswa_id', $mhsId)
+                ->with('dosen')
+                ->get()
+                ->map(fn($s) => $s->dosen->nama_dosen ?? '-')
+                ->join(', ');
+
             $laporan = LaporanMkPpi::with('proyek')
-                ->where('mahasiswa_id', $user->mahasiswa->id)
+                ->where('mahasiswa_id', $mhsId)
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->map(function($l) use ($supervisiDosen) {
+                    $l->dosenSupervisi = $supervisiDosen;
+                    return $l;
+                });
+
         } elseif ($user->isDosen()) {
-            $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
-                ->whereHas('proyek', function($q) use ($user) {
-                    $q->where('dosen_pengampu_id', $user->dosen->id);
-                })
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } else {
-            $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
-                ->orderBy('created_at', 'desc')
-                ->get();
+    // Ambil mahasiswa yang disupervisi dosen ini
+    $mahasiswaIds = SupervisiMatkul::where('dosen_id', $user->dosen->id)
+        ->pluck('mahasiswa_id');
+
+    $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
+        ->whereIn('mahasiswa_id', $mahasiswaIds)
+        ->orderBy('created_at', 'desc')
+        ->get();
         }
 
         return view('laporan.index', compact('laporan'));
@@ -38,23 +50,21 @@ class LaporanController extends Controller
     {
         $user = auth()->user();
 
+        $supervisiList = collect();
         if ($user->isMahasiswa()) {
-            $proyekList = PengajuanProyek::whereHas('mahasiswa', function($q) use ($user) {
-                $q->where('mahasiswa_id', $user->mahasiswa->id);
-            })->where('status', 'approved')->get();
-        } else {
-            $proyekList = PengajuanProyek::where('status', 'approved')->get();
+            $supervisiList = SupervisiMatkul::where('mahasiswa_id', $user->mahasiswa->id)
+                ->with(['mataKuliah', 'dosen'])
+                ->get();
         }
 
-        return view('laporan.create', compact('proyekList'));
+        return view('laporan.create', compact('supervisiList'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'pengajuan_proyek_id' => 'required|exists:pengajuan_proyek,id',
-            'jenis_laporan'       => 'required|in:Supervisi,Laporan Teknik,PAB',
-            'file'                => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'jenis_laporan' => 'required|in:Supervisi,Laporan Teknik,PAB',
+            'file'          => 'required|file|mimes:pdf,doc,docx|max:5120',
         ]);
 
         $user     = auth()->user();
@@ -63,10 +73,14 @@ class LaporanController extends Controller
         $filePath = $file->storeAs('laporan', $fileName, 'public');
         $kode     = 'LPR-' . $user->mahasiswa->nim . '-' . now()->format('YmdHis');
 
+        $proyek = PengajuanProyek::whereHas('mahasiswa', function($q) use ($user) {
+            $q->where('mahasiswa_id', $user->mahasiswa->id);
+        })->where('status', 'approved')->first();
+
         LaporanMkPpi::create([
             'kode_laporan'        => $kode,
             'mahasiswa_id'        => $user->mahasiswa->id,
-            'pengajuan_proyek_id' => $request->pengajuan_proyek_id,
+            'pengajuan_proyek_id' => $proyek?->id,
             'jenis_laporan'       => $request->jenis_laporan,
             'file_path'           => $filePath,
         ]);

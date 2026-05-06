@@ -35,18 +35,14 @@
         <form action="{{ route('laporan.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
 
-            {{-- Proyek --}}
-<div>
-    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Proyek</label>
-    <select name="pengajuan_proyek_id"
-        class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50 text-sm text-[#004d4d] font-medium focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-300 transition">
-        <option value="">-- Pilih Proyek --</option>
-        @foreach($proyekList as $p)
-        <option value="{{ $p->id }}" {{ old('pengajuan_proyek_id') == $p->id ? 'selected' : '' }}>
-            {{ $p->judul_proyek }}
-        </option>
-        @endforeach
-    </select>
+            {{-- Info Supervisi (otomatis) --}}
+<div class="px-4 py-3 rounded-2xl bg-teal-50 border border-teal-100 text-sm text-teal-800">
+    <p class="text-[10px] font-black uppercase tracking-widest text-teal-500 mb-1">Laporan diajukan ke</p>
+    @foreach($supervisiList as $s)
+    <p class="font-semibold">{{ $s->dosen->nama_dosen ?? '-' }}
+        <span class="font-normal text-teal-600">· {{ $s->mataKuliah->nama_matkul ?? '-' }}</span>
+    </p>
+    @endforeach
 </div>
 
             {{-- Jenis Laporan --}}

@@ -60,16 +60,17 @@
                     <p class="text-xs text-slate-400 mt-0.5 truncate">{{ Str::limit($entry->aktivitas, 80) }}</p>
                 </div>
                 <div class="flex items-center gap-3 shrink-0">
-                    @if($entry->dokumentasi)
-                    <span class="material-symbols-outlined text-slate-300 text-lg" title="Ada dokumentasi">attach_file</span>
-                    @endif
-                    <span class="text-[10px] font-bold px-3 py-1 rounded-full {{ $entry->getStatusBadgeColor() }}">
-                        {{ $entry->getStatusLabel() }}
-                    </span>
-                    <a href="{{ route('logbook_harian.show', $entry) }}" class="text-primary">
-                        <span class="material-symbols-outlined text-xl">chevron_right</span>
-                    </a>
-                </div>
+    @if($entry->dokumentasi)
+<a href="{{ asset('storage/' . $entry->dokumentasi) }}" target="_blank"
+   title="Lihat dokumentasi"
+   class="material-symbols-outlined text-slate-400 hover:text-primary text-lg transition-colors">
+    attach_file
+</a>
+@endif
+    <a href="{{ route('logbook_harian.show', $entry) }}" class="text-primary">
+        <span class="material-symbols-outlined text-xl">chevron_right</span>
+    </a>
+</div>
             </div>
         </div>
         @endforeach

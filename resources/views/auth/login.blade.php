@@ -1,179 +1,442 @@
+{{-- resources/views/auth/login.blade.php --}}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | PBL Portal AE Polman Bandung</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <title>Masuk | PBL Portal AE Polman Bandung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        "primary": "#00503a",
-                        "primary-container": "#006a4e",
-                        "primary-fixed": "#9ef4d0",
-                        "on-primary": "#ffffff",
-                        "surface": "#f7f9fb",
-                        "surface-container-low": "#f2f4f6",
-                        "surface-container-lowest": "#ffffff",
-                        "outline": "#6f7a73",
-                        "outline-variant": "#bec9c2",
-                        "secondary": "#515f74",
+                        aqua: {
+                            50:  '#f0fffe',
+                            100: '#ccfff7',
+                            200: '#7fffd4',
+                            300: '#40e0d0',
+                            400: '#00c4b4',
+                            500: '#00a896',
+                            600: '#008080',
+                            700: '#006666',
+                            800: '#004d4d',
+                            900: '#003333',
+                        }
+                    },
+                    keyframes: {
+                        float: {
+                            '0%,100%': { transform: 'translateY(0px)' },
+                            '50%':     { transform: 'translateY(-12px)' },
+                        },
+                        fadeDown: {
+                            '0%':   { opacity: '0', transform: 'translateY(-16px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeUp: {
+                            '0%':   { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    },
+                    animation: {
+                        float:    'float 7s ease-in-out infinite',
+                        fadeDown: 'fadeDown 0.4s ease forwards',
+                        fadeUp:   'fadeUp 0.5s ease forwards',
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
-        .abstract-lines {
-            background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='2'%3E%3Cpath d='M0 100 L400 100 M100 0 L100 400 M0 300 L400 300 M300 0 L300 400'/%3E%3Cpath d='M50 50 L150 50 L150 150 L50 150 Z'/%3E%3Cpath d='M250 250 L350 250 L350 350 L250 350 Z'/%3E%3C/g%3E%3C/svg%3E");
-            background-size: 200px 200px;
+        ::selection { background: #7fffd4; color: #004d4d; }
+
+        .dot-grid {
+            background-image: radial-gradient(#008080 1px, transparent 0);
+            background-size: 28px 28px;
         }
-        .geometric-decor { position: absolute; border: 1px solid rgba(255,255,255,0.1); transform: rotate(45deg); }
+
+        .blob {
+            filter: blur(80px);
+            border-radius: 9999px;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3.25rem;
+            background: rgba(127,255,212,0.06);
+            border: 1.5px solid rgba(127,255,212,0.25);
+            border-radius: 1rem;
+            color: #003333;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .input-field::placeholder { color: rgba(0,128,128,0.35); font-weight: 400; }
+        .input-field:focus {
+            border-color: rgba(0,128,128,0.55);
+            background: rgba(127,255,212,0.11);
+            box-shadow: 0 0 0 4px rgba(127,255,212,0.18);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(0,102,102,0.4);
+            font-size: 20px !important;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+        .input-group:focus-within .input-icon { color: #008080; }
+
+        @keyframes pulse-ring {
+            0%        { transform: scale(1); opacity: 0.8; }
+            80%, 100% { transform: scale(2.2); opacity: 0; }
+        }
+        .pulse-dot { position: relative; }
+        .pulse-dot::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #40e0d0;
+            animation: pulse-ring 2.5s cubic-bezier(0.215,0.61,0.355,1) infinite;
+        }
+
+        html { scroll-behavior: smooth; }
     </style>
 </head>
-<body class="bg-surface text-gray-900 antialiased">
-<main class="flex h-full w-full">
-    <!-- Left Side: Branding -->
-    <section class="hidden lg:flex flex-col relative w-1/2 bg-gradient-to-br from-primary to-primary-container overflow-hidden items-center justify-center p-12">
-        <div class="absolute inset-0 abstract-lines opacity-20"></div>
-        <div class="geometric-decor w-64 h-64 -top-20 -left-20 bg-white/5"></div>
-        <div class="geometric-decor w-48 h-48 top-1/4 -right-24 bg-white/5"></div>
-        <div class="geometric-decor w-80 h-80 -bottom-32 left-1/4 bg-white/5 opacity-50"></div>
-        <div class="absolute top-10 left-10 opacity-20">
-            <span class="material-symbols-outlined text-white text-8xl">precision_manufacturing</span>
-        </div>
-        <div class="absolute bottom-10 right-10 opacity-20">
-            <span class="material-symbols-outlined text-white text-8xl">memory</span>
-        </div>
-        <div class="relative z-10 flex flex-col items-center text-center space-y-8">
-            {{-- BARU --}}
-<div class="w-48 h-48 bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-2xl border border-white/20 flex items-center justify-center">
-    <img src="{{ asset('images/logo.png') }}" alt="AE Polman" class="w-full h-full object-contain drop-shadow-lg">
+<body class="min-h-screen bg-aqua-50 font-sans text-aqua-900 antialiased overflow-hidden">
+
+{{-- ============================================================
+     TOAST NOTIFIKASI
+============================================================ --}}
+<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[999] hidden animate-fadeDown">
+    <div id="toast-inner" class="flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold min-w-[260px]">
+        <span class="material-symbols-outlined shrink-0" id="toast-icon" style="font-size:18px;"></span>
+        <p id="toast-msg"></p>
+        <button onclick="hideToast()" class="ml-auto opacity-50 hover:opacity-100 transition-opacity">
+            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+    </div>
 </div>
-            <div class="space-y-2">
-                <h1 class="text-white text-4xl font-black tracking-tight leading-tight">AE Polman Bandung</h1>
-                <div class="flex items-center justify-center space-x-4">
-                    <div class="h-[1px] w-8 bg-white/30"></div>
-                    <p class="text-white/90 text-sm font-semibold tracking-[0.2em] uppercase">Automation Engineering</p>
-                    <div class="h-[1px] w-8 bg-white/30"></div>
-                </div>
-            </div>
-            <div class="max-w-md pt-8">
-                <p class="text-white/70 text-sm leading-relaxed font-light tracking-wide">
-                    Integrated Project-Based Learning Management System.
-                    Empowering the next generation of mechatronics and automation experts.
-                </p>
-                <div class="mt-8 flex justify-center space-x-8 text-white/40">
-                    <span class="material-symbols-outlined text-xl">settings_input_component</span>
-                    <span class="material-symbols-outlined text-xl">account_tree</span>
-                    <span class="material-symbols-outlined text-xl">developer_board</span>
-                    <span class="material-symbols-outlined text-xl">smart_toy</span>
-                </div>
-            </div>
+
+<div class="flex h-screen w-full">
+
+    {{-- ============================================================
+         KIRI — BRANDING PANEL
+    ============================================================ --}}
+    <div class="hidden lg:flex relative w-[48%] bg-aqua-800 flex-col items-center justify-center p-16 overflow-hidden">
+
+        <div class="absolute inset-0 dot-grid opacity-[0.07] pointer-events-none"></div>
+        <div class="blob w-[65%] h-[65%] bg-aqua-300/10 -top-[15%] -right-[10%]"></div>
+        <div class="blob w-[55%] h-[55%] bg-aqua-200/8  bottom-[5%] -left-[10%]"></div>
+
+        <div class="relative z-10 flex flex-col items-center text-center gap-7 w-full max-w-sm">
+
+    {{-- Logo --}}
+    <div class="w-24 h-24 rounded-[2rem] bg-aqua-200/10 border border-aqua-200/20 flex items-center justify-center shadow-2xl overflow-hidden">
+        <img src="{{ asset('images/logo.png') }}" alt="AE Polman" class="w-18 h-18 object-contain"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <span class="text-aqua-200 font-black text-3xl hidden items-center justify-center w-full h-full">AE</span>
+    </div>
+
+    {{-- Badge aktif --}}
+    <div class="flex items-center justify-center gap-2">
+        <span class="pulse-dot w-2.5 h-2.5 rounded-[2rem] bg-aqua-400 shrink-0"></span>
+        <span class="text-aqua-200/50 font-bold text-[11px] tracking-[0.3em] uppercase">Sistem Aktif</span>
+    </div>
+
+    {{-- Teks utama --}}
+    <div class="space-y-2 -mt-2">
+        <h1 class="text-5xl font-black text-white leading-tight tracking-tighter">PBL Portal</h1>
+        <p class="text-aqua-200/50 text-sm font-bold tracking-widest uppercase">AE Polman Bandung</p>
+    </div>
+
+    {{-- Divider --}}
+    <div class="flex items-center gap-4 w-full">
+        <div class="flex-1 h-px bg-aqua-200/10"></div>
+        <span class="text-aqua-200/25 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">Automation Engineering</span>
+        <div class="flex-1 h-px bg-aqua-200/10"></div>
+    </div>
+
+    {{-- Deskripsi --}}
+    <p class="text-aqua-200/40 text-sm leading-relaxed font-medium">
+        Integrated Project-Based Learning Management System untuk seluruh sivitas akademika Jurusan AE.
+    </p>
+
+    {{-- Stats --}}
+    <div class="flex items-center gap-8">
+        @foreach([['4','Role'],['3','Prodi'],['6','Fitur']] as $s)
+        <div class="text-center">
+            <p class="text-3xl font-black text-aqua-300">{{ $s[0] }}</p>
+            <p class="text-[10px] text-aqua-200/30 font-bold uppercase tracking-widest mt-0.5">{{ $s[1] }}</p>
         </div>
-    </section>
+        @if(!$loop->last)
+        <div class="w-px h-8 bg-aqua-200/10"></div>
+        @endif
+        @endforeach
+    </div>
 
-    <!-- Right Side: Login Form -->
-    <section class="w-full lg:w-1/2 bg-surface-container-lowest flex flex-col items-center justify-center p-8 md:p-16 lg:p-24 relative overflow-y-auto">
-        <div class="w-full max-w-md space-y-10">
-            <!-- Mobile Branding -->
-            <div class="lg:hidden flex flex-col items-center mb-8 space-y-3">
-             {{-- BARU --}}
-<img src="{{ asset('images/logo.png') }}" alt="AE Polman" class="w-14 h-14 object-contain">
-                <h2 class="text-2xl font-bold text-primary">PBL Portal</h2>
+</div>
+    </div>
+
+    {{-- ============================================================
+         KANAN — FORM LOGIN
+    ============================================================ --}}
+    <div class="flex-1 flex flex-col items-center justify-center p-10 md:p-16 bg-white relative overflow-y-auto">
+
+        <div class="blob w-[55%] h-[45%] bg-aqua-200/20 -top-[5%] -right-[5%]"></div>
+        <div class="blob w-[40%] h-[40%] bg-aqua-100/30 bottom-[5%] -left-[5%]"></div>
+
+        <div class="relative z-10 w-full max-w-md animate-fadeUp">
+
+            {{-- Mobile logo --}}
+            <div class="lg:hidden flex items-center gap-3 mb-10">
+                <div class="h-11 w-11 rounded-xl bg-aqua-800 flex items-center justify-center overflow-hidden">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 w-8 object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span class="text-aqua-200 font-black text-xs hidden">AE</span>
+                </div>
+                <div>
+                    <p class="font-black text-aqua-800 text-sm">PBL Portal</p>
+                    <p class="text-aqua-600/50 text-[10px] font-bold uppercase tracking-widest">AE Polman Bandung</p>
+                </div>
             </div>
 
-            <div class="space-y-3">
-                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Selamat Datang</h2>
-                <p class="text-secondary font-medium">Silakan masuk ke akun Akademik Anda</p>
+            {{-- Header --}}
+            <div class="mb-10">
+                <span class="inline-block text-[10px] font-bold tracking-[0.3em] uppercase text-aqua-600 bg-aqua-200/20 border border-aqua-200/50 px-3.5 py-1.5 rounded-full mb-5">
+                    Portal Akademik
+                </span>
+                <h2 class="text-4xl font-black text-aqua-900 tracking-tight">Selamat Datang</h2>
+                <p class="text-aqua-700/50 mt-2 text-base font-medium">Masuk ke akun akademik Anda</p>
             </div>
 
-            <!-- Session Status -->
+            {{-- Flash status --}}
             @if(session('status'))
-                <div class="p-3 bg-green-50 text-green-700 rounded-lg text-sm font-medium">{{ session('status') }}</div>
+            <div class="mb-6 flex items-center gap-3 p-4 bg-aqua-200/20 border border-aqua-200/50 rounded-2xl">
+                <span class="material-symbols-outlined text-aqua-600 shrink-0" style="font-size:18px;">check_circle</span>
+                <p class="text-aqua-700 text-sm font-semibold">{{ session('status') }}</p>
+            </div>
             @endif
 
-            <!-- Error Messages -->
+            {{-- Error --}}
             @if($errors->any())
-                <div class="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
+            <div class="mb-6 flex items-start gap-3 p-4 bg-red-50 border border-red-200/60 rounded-2xl">
+                <span class="material-symbols-outlined text-red-500 shrink-0 mt-0.5" style="font-size:18px;">error</span>
+                <div>
                     @foreach($errors->all() as $error)
-                        <p>{{ $error }}</p>
+                    <p class="text-red-600 text-sm font-semibold">{{ $error }}</p>
                     @endforeach
                 </div>
+            </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}" class="space-y-6">
+            {{-- Form --}}
+            <form method="POST" action="{{ route('login') }}" class="space-y-6" id="login-form">
                 @csrf
-                <!-- Email -->
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-outline uppercase tracking-widest ml-1" for="email">Email</label>
-                    <div class="relative group">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-xl">person</span>
-                        <input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border border-transparent rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest focus:border-primary/30 transition-all placeholder:text-outline-variant text-gray-900 font-medium outline-none"
-                               id="email" name="email" type="email"
+
+                {{-- Email --}}
+                <div>
+                    <label class="block text-[11px] font-bold text-aqua-700/60 uppercase tracking-[0.2em] mb-2.5" for="email">
+                        Email
+                    </label>
+                    <div class="input-group relative">
+                        <input class="input-field pr-4" id="email" name="email" type="email"
                                placeholder="email@polman.ac.id"
-                               value="{{ old('email') }}" required autofocus/>
+                               value="{{ old('email') }}" required autofocus autocomplete="email">
+                        <span class="material-symbols-outlined input-icon">person</span>
                     </div>
                 </div>
 
-                <!-- Password -->
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold text-outline uppercase tracking-widest ml-1" for="password">Kata Sandi</label>
-                    <div class="relative group">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors text-xl">lock</span>
-                        <input class="w-full pl-12 pr-12 py-4 bg-surface-container-low border border-transparent rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest focus:border-primary/30 transition-all placeholder:text-outline-variant text-gray-900 font-medium outline-none"
-                               id="password" name="password" type="password"
-                               placeholder="••••••••" required/>
-                        <button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button"
-                                onclick="const p=document.getElementById('password');p.type=p.type==='password'?'text':'password'">
-                            <span class="material-symbols-outlined text-xl">visibility</span>
+                {{-- Password --}}
+                <div>
+                    <label class="block text-[11px] font-bold text-aqua-700/60 uppercase tracking-[0.2em] mb-2.5" for="password">
+                        Kata Sandi
+                    </label>
+                    <div class="input-group relative">
+                        <input class="input-field" id="password" name="password" type="password"
+                               placeholder="••••••••" required autocomplete="current-password"
+                               style="padding-right: 3.5rem;"
+                               onkeyup="checkCapsLock(event)">
+                        <span class="material-symbols-outlined input-icon">lock</span>
+                        <button type="button"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-aqua-600/40 hover:text-aqua-700 transition-colors"
+                                onclick="togglePassword()">
+                            <span class="material-symbols-outlined" id="pw-eye" style="font-size:20px;">visibility</span>
                         </button>
                     </div>
+
+                    {{-- Caps Lock warning --}}
+                    <div id="caps-warning" class="hidden mt-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-amber-500" style="font-size:14px;">warning</span>
+                        <p class="text-amber-600 text-xs font-semibold">Caps Lock aktif</p>
+                    </div>
                 </div>
 
-                <!-- Remember Me -->
-                <div class="flex items-center justify-between py-2">
-                    <label class="flex items-center space-x-3 cursor-pointer group">
-                        <input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 bg-surface-container-low" type="checkbox" name="remember" id="remember_me">
-                        <span class="text-sm text-secondary font-medium group-hover:text-primary transition-colors">Ingat saya</span>
+                {{-- Remember & Forgot --}}
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <div class="relative">
+                            <input type="checkbox" name="remember" id="remember_me" class="peer sr-only">
+                            <div id="checkbox-box" class="w-5 h-5 rounded-md border-2 border-aqua-200/60 bg-aqua-200/10 flex items-center justify-center transition-all">
+                                <span class="material-symbols-outlined text-white hidden" id="checkbox-check" style="font-size:13px;">check</span>
+                            </div>
+                        </div>
+                        <span class="text-sm text-aqua-700/60 font-semibold group-hover:text-aqua-700 transition-colors">Ingat saya</span>
                     </label>
-                    @if (Route::has('password.request'))
-                        <a class="text-sm font-semibold text-primary hover:underline decoration-2 underline-offset-4" href="{{ route('password.request') }}">
-                            Lupa Kata Sandi?
-                        </a>
+
+                    @if(Route::has('password.request'))
+                    <a href="{{ route('password.request') }}"
+                       class="text-sm font-bold text-aqua-600 hover:text-aqua-800 hover:underline underline-offset-4 decoration-2 transition-colors">
+                        Lupa kata sandi?
+                    </a>
                     @endif
                 </div>
 
-                <button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white font-bold rounded-lg shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95 uppercase tracking-wider text-sm" type="submit">
+                {{-- Submit --}}
+                <button type="submit" id="submit-btn"
+                        class="w-full flex items-center justify-center gap-2.5 font-black text-base py-4 rounded-2xl transition-all duration-200 shadow-xl active:scale-[0.98] mt-2 text-white"
+                        style="background: linear-gradient(135deg, #004d4d 0%, #008080 50%, #40e0d0 100%); box-shadow: 0 8px 32px -8px rgba(0,128,128,0.5);">
+                    <span class="material-symbols-outlined" style="font-size:18px;">rocket_launch</span>
                     Masuk Sekarang
                 </button>
             </form>
 
-            <div class="pt-4 flex flex-col items-center space-y-4">
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-secondary">Butuh bantuan akses?</span>
-                    <a class="text-sm font-bold text-primary hover:text-primary-container transition-colors" href="#">Hubungi Admin</a>
-                </div>
+            {{-- Divider --}}
+            <div class="flex items-center gap-4 my-7">
+                <div class="flex-1 h-px bg-aqua-200/40"></div>
+                <span class="text-[10px] font-bold text-aqua-600/30 uppercase tracking-widest">atau</span>
+                <div class="flex-1 h-px bg-aqua-200/40"></div>
             </div>
+
+            {{-- Register --}}
+            <p class="text-center text-sm text-aqua-700/50 font-medium">
+                Belum punya akun?
+                <a href="{{ route('register') }}" class="font-black text-aqua-700 hover:text-aqua-800 hover:underline underline-offset-4 decoration-2 transition-colors ml-1">
+                    Daftar sekarang
+                </a>
+            </p>
+
+            <p class="text-center text-[11px] text-aqua-600/30 font-semibold mt-3">
+                Butuh akses? Hubungi Admin KPS / Kaprodi Anda.
+            </p>
         </div>
 
-        <footer class="mt-auto pt-8 w-full max-w-md">
-            <div class="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0 text-[10px] uppercase tracking-[0.15em] text-outline/60 font-bold border-t border-outline-variant/30 pt-6">
-                <span>© 2024 PBL Portal AE Polman</span>
-                <div class="flex space-x-6">
-                    <a class="hover:text-primary transition-colors" href="#">Privasi</a>
-                    <a class="hover:text-primary transition-colors" href="#">Syarat</a>
-                    <a class="hover:text-primary transition-colors" href="#">Support</a>
-                </div>
-            </div>
-        </footer>
-    </section>
-</main>
+        {{-- Footer --}}
+        <div class="absolute bottom-6 left-0 right-0 text-center">
+            <p class="text-[10px] font-bold text-aqua-600/20 uppercase tracking-widest">
+                © {{ date('Y') }} · PBL Portal AE Polman Bandung
+            </p>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================
+     JAVASCRIPT
+============================================================ --}}
+<script>
+// Toggle show/hide password
+function togglePassword() {
+    const input = document.getElementById('password');
+    const icon  = document.getElementById('pw-eye');
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    icon.textContent = isHidden ? 'visibility_off' : 'visibility';
+}
+
+// Caps Lock warning
+function checkCapsLock(e) {
+    const warning = document.getElementById('caps-warning');
+    if (e.getModifierState && e.getModifierState('CapsLock')) {
+        warning.classList.remove('hidden');
+        warning.classList.add('flex');
+    } else {
+        warning.classList.add('hidden');
+        warning.classList.remove('flex');
+    }
+}
+
+// Custom checkbox
+document.getElementById('remember_me').addEventListener('change', function() {
+    const box   = document.getElementById('checkbox-box');
+    const check = document.getElementById('checkbox-check');
+    if (this.checked) {
+        box.classList.add('bg-aqua-600','border-aqua-600');
+        box.classList.remove('border-aqua-200/60','bg-aqua-200/10');
+        check.classList.remove('hidden');
+    } else {
+        box.classList.remove('bg-aqua-600','border-aqua-600');
+        box.classList.add('border-aqua-200/60','bg-aqua-200/10');
+        check.classList.add('hidden');
+    }
+});
+
+// Loading state saat submit
+document.getElementById('login-form').addEventListener('submit', function() {
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg class="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+        Memproses...
+    `;
+    btn.style.opacity = '0.8';
+    btn.style.cursor  = 'not-allowed';
+});
+
+// Toast system
+function showToast(msg, type = 'error') {
+    const toast = document.getElementById('toast');
+    const inner = document.getElementById('toast-inner');
+    const icon  = document.getElementById('toast-icon');
+    const text  = document.getElementById('toast-msg');
+
+    text.textContent = msg;
+
+    if (type === 'error') {
+        inner.className = 'flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold min-w-[260px] bg-red-50 border-red-200 text-red-700';
+        icon.textContent = 'error';
+        icon.className = 'material-symbols-outlined shrink-0 text-red-500';
+    } else {
+        inner.className = 'flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold min-w-[260px] bg-aqua-200/30 border-aqua-200 text-aqua-800';
+        icon.textContent = 'check_circle';
+        icon.className = 'material-symbols-outlined shrink-0 text-aqua-600';
+    }
+
+    toast.classList.remove('hidden');
+    toast.classList.add('animate-fadeDown');
+    setTimeout(hideToast, 4000);
+}
+
+function hideToast() {
+    document.getElementById('toast').classList.add('hidden');
+}
+
+// Auto-trigger toast jika ada error Laravel
+@if($errors->any())
+window.addEventListener('DOMContentLoaded', () => {
+    showToast('{{ $errors->first() }}', 'error');
+});
+@endif
+
+@if(session('status'))
+window.addEventListener('DOMContentLoaded', () => {
+    showToast('{{ session('status') }}', 'success');
+});
+@endif
+</script>
+
 </body>
 </html>

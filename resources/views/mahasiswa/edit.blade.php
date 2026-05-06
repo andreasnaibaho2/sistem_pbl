@@ -1,44 +1,85 @@
 @extends('layouts.app')
+@section('title', 'Edit Mahasiswa')
 @section('content')
-<div class="max-w-lg mx-auto space-y-6">
 
-    <div class="flex items-center gap-3">
-        <a href="/mahasiswa" class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
-            <span class="material-symbols-outlined text-on-surface-variant text-xl">arrow_back</span>
+<div class="max-w-lg">
+
+    {{-- HEADER --}}
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ route('mahasiswa.index') }}"
+           class="p-2.5 text-outline hover:text-primary hover:bg-primary-container rounded-xl transition-all">
+            <span class="material-symbols-outlined">arrow_back</span>
         </a>
         <div>
-            <h2 class="text-xl font-extrabold text-on-surface tracking-tight">Edit Mahasiswa</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Perbarui data mahasiswa</p>
+            <h1 class="text-2xl font-black text-on-surface tracking-tight">Edit <span class="text-[#2dce89]">Mahasiswa</span></h1>
+            <p class="text-sm text-on-surface-variant mt-0.5">Perbarui data mahasiswa</p>
+        </div>
+        {{-- Avatar --}}
+        <div class="ml-auto w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-on-primary font-black text-sm">
+            {{ strtoupper(substr($mahasiswa->nama, 0, 2)) }}
         </div>
     </div>
 
-    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-6 space-y-5">
-        <form method="POST" action="/mahasiswa/{{ $mahasiswa->id }}">
+    @if($errors->any())
+    <div class="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3">
+        <span class="material-symbols-outlined text-red-500 text-base mt-0.5">error</span>
+        <ul class="text-xs text-red-600 font-bold space-y-1">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    <div class="bg-white rounded-[2rem] border border-outline-variant/20 shadow-sm p-8 space-y-5">
+
+        <form method="POST" action="{{ route('mahasiswa.update', $mahasiswa->id) }}">
             @csrf @method('PUT')
+
             <div class="space-y-5">
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">NIM</label>
-                    <input type="text" name="nim"
-                           class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-sm font-medium text-on-surface placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all {{ $errors->has('nim') ? 'ring-2 ring-red-400' : '' }}"
-                           value="{{ old('nim', $mahasiswa->nim) }}" required>
-                    @error('nim')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                <div>
+                    <label class="block text-[10px] font-black text-outline uppercase tracking-widest mb-2">NIM</label>
+                    <input type="text" name="nim" value="{{ old('nim', $mahasiswa->nim) }}" required
+                        class="w-full px-5 py-3.5 bg-surface-container-low border border-outline-variant/30 rounded-2xl text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all
+                        {{ $errors->has('nim') ? 'border-red-400 bg-red-50' : '' }}">
+                    @error('nim')<p class="text-xs text-red-500 font-bold mt-1.5">{{ $message }}</p>@enderror
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nama Lengkap</label>
-                    <input type="text" name="nama"
-                           class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-sm font-medium text-on-surface placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all {{ $errors->has('nama') ? 'ring-2 ring-red-400' : '' }}"
-                           value="{{ old('nama', $mahasiswa->nama) }}" required>
-                    @error('nama')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                <div>
+                    <label class="block text-[10px] font-black text-outline uppercase tracking-widest mb-2">Nama Lengkap</label>
+                    <input type="text" name="nama" value="{{ old('nama', $mahasiswa->nama) }}" required
+                        class="w-full px-5 py-3.5 bg-surface-container-low border border-outline-variant/30 rounded-2xl text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all
+                        {{ $errors->has('nama') ? 'border-red-400 bg-red-50' : '' }}">
+                    @error('nama')<p class="text-xs text-red-500 font-bold mt-1.5">{{ $message }}</p>@enderror
                 </div>
 
-                <div class="flex gap-3 pt-2">
+                <div>
+                    <label class="block text-[10px] font-black text-outline uppercase tracking-widest mb-2">Program Studi</label>
+                    <select name="prodi" required
+                        class="w-full px-5 py-3.5 bg-surface-container-low border border-outline-variant/30 rounded-2xl text-sm font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all">
+                        <option value="">Pilih Program Studi</option>
+                        <option value="informatika" {{ old('prodi', $mahasiswa->user->prodi ?? '') === 'informatika' ? 'selected' : '' }}>D4 TRIN – Teknologi Rekayasa Informatika Industri</option>
+                        <option value="otomasi" {{ old('prodi', $mahasiswa->user->prodi ?? '') === 'otomasi' ? 'selected' : '' }}>D4 TRO – Teknologi Rekayasa Otomasi</option>
+                        <option value="mekatronika" {{ old('prodi', $mahasiswa->user->prodi ?? '') === 'mekatronika' ? 'selected' : '' }}>D4 TRMO – Teknologi Rekayasa Mekatronika</option>
+                    </select>
+                    @error('prodi')<p class="text-xs text-red-500 font-bold mt-1.5">{{ $message }}</p>@enderror
+                </div>
+
+                {{-- Email (read-only) --}}
+                <div>
+                    <label class="block text-[10px] font-black text-outline uppercase tracking-widest mb-2">Email</label>
+                    <input type="text" value="{{ $mahasiswa->user->email ?? '-' }}" disabled
+                        class="w-full px-5 py-3.5 bg-surface-container border border-outline-variant/20 rounded-2xl text-sm text-on-surface-variant cursor-not-allowed">
+                    <p class="text-[11px] text-outline mt-1.5">Email tidak dapat diubah</p>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
                     <button type="submit"
-                            class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-primary to-secondary text-white font-semibold rounded-lg text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-all">
-                        <span class="material-symbols-outlined text-sm">check</span> Update
+                        class="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-2xl text-sm font-black hover:opacity-90 hover:scale-105 transition-all shadow-lg">
+                        <span class="material-symbols-outlined text-base">check</span> Update
                     </button>
-                    <a href="/mahasiswa"
-                       class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-high text-on-surface-variant font-semibold rounded-lg text-sm hover:bg-surface-container-highest transition-all">
+                    <a href="{{ route('mahasiswa.index') }}"
+                        class="flex items-center gap-2 px-6 py-3 bg-surface-container text-on-surface-variant rounded-2xl text-sm font-black hover:bg-surface-container-high transition-all">
                         Batal
                     </a>
                 </div>
@@ -46,4 +87,5 @@
         </form>
     </div>
 </div>
+
 @endsection

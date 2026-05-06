@@ -11,6 +11,7 @@ use App\Models\PenilaianManager;
 use App\Models\PenilaianDosen;
 use App\Models\PengajuanProyek;
 use App\Models\User;
+use App\Models\SupervisiMatkul;
 
 class DashboardController extends Controller
 {
@@ -37,31 +38,32 @@ class DashboardController extends Controller
     }
 
     private function adminDashboard()
-    {
-        $mahasiswaData = Mahasiswa::with('user')->get()->map(function ($m) {
-            $nilaiManager = PenilaianManager::where('mahasiswa_id', $m->id)->first();
-            $nilaiDosen   = PenilaianDosen::where('mahasiswa_id', $m->id)->first();
-            return [
-                'id'              => $m->id,
-                'name'            => $m->nama,
-                'nim'             => $m->nim,
-                'prodi'           => $m->user->prodi ?? null,
-                'nilai_supervisi' => $nilaiDosen   ? round($nilaiDosen->nilai_dosen, 1)     : null,
-                'nilai_proyek'    => $nilaiManager ? round($nilaiManager->nilai_manager, 1) : null,
-            ];
-        });
-
-        $stats = [
-            'total_mahasiswa' => Mahasiswa::count(),
-            'total_dosen'     => Dosen::count(),
-            'total_proyek'    => PengajuanProyek::count(),
-            'pending_dosen'   => User::whereIn('role', ['dosen', 'manager_proyek'])
-                                    ->where('status', 'pending')->count(),
-            'pending_proyek'  => PengajuanProyek::where('status', 'pending')->count(),
+{
+    $mahasiswaData = Mahasiswa::with('user')->get()->map(function ($m) {
+        $nilaiManager = PenilaianManager::where('mahasiswa_id', $m->id)->first();
+        $nilaiDosen   = PenilaianDosen::where('mahasiswa_id', $m->id)->first();
+        return [
+            'id'              => $m->id,
+            'name'            => $m->nama,
+            'nim'             => $m->nim,
+            'prodi'           => $m->user->prodi ?? null,
+            'nilai_supervisi' => $nilaiDosen   ? round($nilaiDosen->nilai_dosen, 1)     : null,
+            'nilai_proyek'    => $nilaiManager ? round($nilaiManager->nilai_manager, 1) : null,
         ];
+    });
 
-        return view('admin.dashboard', compact('mahasiswaData', 'stats'));
-    }
+    $stats = [
+        'total_mahasiswa'   => Mahasiswa::count(),
+        'total_dosen'       => Dosen::count(),
+        'total_proyek'      => PengajuanProyek::count(),
+        'total_proyek_aktif'=> PengajuanProyek::where('status', 'approved')->count(),
+        'pending_dosen'     => User::whereIn('role', ['dosen', 'manager_proyek'])
+                                   ->where('status', 'pending')->count(),
+        'pending_proyek'    => PengajuanProyek::where('status', 'pending')->count(),
+    ];
+
+    return view('admin.dashboard', compact('mahasiswaData', 'stats'));
+}
 
     private function managerDashboard()
     {
@@ -92,110 +94,119 @@ class DashboardController extends Controller
     }
 
     private function dosenDashboard()
-    {
-        $user  = auth()->user();
-        $dosen = $user->dosen;
+{
+    $user  = auth()->user();
+    $dosen = $user->dosen;
 
-        $proyekList = PengajuanProyek::where('status', 'approved')
-            ->with(['mahasiswa.user', 'manager', 'kebutuhan'])
-            ->latest()
-            ->get();
+    // Ambil mahasiswa yang disupervisi dosen ini
+    $supervisiList = \App\Models\SupervisiMatkul::where('dosen_id', $dosen->id)
+        ->with('mahasiswa')
+        ->get();
 
-        $mahasiswaIds = $proyekList->flatMap(fn($p) => $p->mahasiswa->pluck('id'));
+    $mahasiswaIds = $supervisiList->pluck('mahasiswa_id')->unique();
+    $totalMahasiswa = $mahasiswaIds->count();
 
-        $totalMahasiswa  = $mahasiswaIds->unique()->count();
-        $totalProyek     = $proyekList->count();
+    $laporanMenunggu = LaporanMkPpi::whereIn('mahasiswa_id', $mahasiswaIds)
+        ->where('status_verifikasi', 'pending')
+        ->count();
 
-        $laporanMenunggu = LaporanMkPpi::whereIn('mahasiswa_id', $mahasiswaIds)
-            ->where('status_verifikasi', 'pending')
-            ->count();
+    $penilaianSelesai = PenilaianDosen::whereIn('mahasiswa_id', $mahasiswaIds)
+        ->whereNotNull('nilai_dosen')
+        ->count();
 
-        $penilaianSelesai = PenilaianDosen::whereIn('mahasiswa_id', $mahasiswaIds)
-            ->whereNotNull('nilai_dosen')
-            ->count();
+    $laporanTerbaru = LaporanMkPpi::whereIn('mahasiswa_id', $mahasiswaIds)
+        ->with(['mahasiswa'])
+        ->latest()
+        ->take(5)
+        ->get();
 
-        $laporanTerbaru = LaporanMkPpi::whereIn('mahasiswa_id', $mahasiswaIds)
-            ->with(['mahasiswa'])
-            ->latest()
-            ->take(5)
-            ->get();
+    $stats = [
+        'total_proyek'      => 0,
+        'total_mahasiswa'   => $totalMahasiswa,
+        'laporan_menunggu'  => $laporanMenunggu,
+        'penilaian_selesai' => $penilaianSelesai,
+    ];
 
-        $stats = [
-            'total_proyek'      => $totalProyek,
-            'total_mahasiswa'   => $totalMahasiswa,
-            'laporan_menunggu'  => $laporanMenunggu,
-            'penilaian_selesai' => $penilaianSelesai,
-        ];
+    // Kirim $proyekList kosong agar view tidak error
+    $proyekList = collect();
+    $totalProyek = 0;
 
-        return view('dosen.dashboard', compact(
-            'proyekList', 'stats',
-            'totalProyek', 'totalMahasiswa',
-            'laporanMenunggu', 'penilaianSelesai',
-            'laporanTerbaru'
-        ));
-    }
+    return view('dosen.dashboard', compact(
+        'proyekList', 'stats',
+        'totalProyek', 'totalMahasiswa',
+        'laporanMenunggu', 'penilaianSelesai',
+        'laporanTerbaru'
+    ));
+}
 
     private function mahasiswaDashboard()
-    {
-        $user = auth()->user();
-        $mhs  = $user->mahasiswa;
+{
+    $user = auth()->user();
+    $mhs  = $user->mahasiswa;
 
-        $proyekDitugaskan = $mhs
-            ? PengajuanProyek::whereHas('mahasiswa', function ($q) use ($mhs) {
-                    $q->where('mahasiswa_id', $mhs->id);
-                })
-                ->with(['kebutuhan'])
-                ->get()
-            : collect();
+    $proyekDitugaskan = $mhs
+        ? PengajuanProyek::whereHas('mahasiswa', function ($q) use ($mhs) {
+                $q->where('mahasiswa_id', $mhs->id);
+            })
+            ->with(['kebutuhan'])
+            ->get()
+        : collect();
 
-        $logbook = LogbookMingguan::where('mahasiswa_id', $mhs?->id)
-            ->orderBy('minggu_ke')
-            ->get();
+    // Supervisi matkul mahasiswa ini
+    $supervisiList = $mhs
+        ? \App\Models\SupervisiMatkul::where('mahasiswa_id', $mhs->id)
+            ->with(['mataKuliah', 'dosen'])
+            ->get()
+        : collect();
 
-        $laporan      = LaporanMkPpi::where('mahasiswa_id', $mhs?->id)->get();
-        $nilaiManager = PenilaianManager::where('mahasiswa_id', $mhs?->id)->first();
-        $nilaiDosen   = PenilaianDosen::where('mahasiswa_id', $mhs?->id)->first();
+    $logbook = LogbookMingguan::where('mahasiswa_id', $mhs?->id)
+        ->orderBy('minggu_ke')
+        ->get();
 
-        $nilaiAkhir = null;
-        if ($nilaiManager && $nilaiDosen) {
-            $nilaiAkhir = round($nilaiManager->nilai_manager + $nilaiDosen->nilai_dosen, 1);
-        } elseif ($nilaiManager) {
-            $nilaiAkhir = round($nilaiManager->nilai_manager, 1);
-        } elseif ($nilaiDosen) {
-            $nilaiAkhir = round($nilaiDosen->nilai_dosen, 1);
-        }
+    $laporan      = LaporanMkPpi::where('mahasiswa_id', $mhs?->id)->get();
+    $nilaiManager = PenilaianManager::where('mahasiswa_id', $mhs?->id)->first();
+    $nilaiDosen   = PenilaianDosen::where('mahasiswa_id', $mhs?->id)->first();
 
-        $grade = '-';
-        if ($nilaiAkhir !== null) {
-            $grade = match(true) {
-                $nilaiAkhir >= 85 => 'A',
-                $nilaiAkhir >= 75 => 'B',
-                $nilaiAkhir >= 65 => 'C',
-                $nilaiAkhir >= 55 => 'D',
-                default           => 'E',
-            };
-        }
-
-        $totalLogbook = $logbook->count();
-        $totalLaporan = $laporan->count();
-
-        $logbookTerbaru = \App\Models\LogbookHarian::where('mahasiswa_id', $mhs?->id)
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-        $stats = [
-            'total_logbook'    => $totalLogbook,
-            'logbook_verified' => $logbook->where('status', 'disetujui')->count(),
-            'nilai_akhir'      => $nilaiAkhir ?? 0,
-            'grade'            => $grade,
-        ];
-
-        return view('mahasiswa.dashboard', compact(
-            'mhs', 'logbook', 'laporan',
-            'nilaiManager', 'nilaiDosen', 'stats',
-            'nilaiAkhir', 'grade', 'totalLogbook', 'totalLaporan',
-            'logbookTerbaru', 'proyekDitugaskan'
-        ));
+    $nilaiAkhir = null;
+    if ($nilaiManager && $nilaiDosen) {
+        $nilaiAkhir = round($nilaiManager->nilai_manager + $nilaiDosen->nilai_dosen, 1);
+    } elseif ($nilaiManager) {
+        $nilaiAkhir = round($nilaiManager->nilai_manager, 1);
+    } elseif ($nilaiDosen) {
+        $nilaiAkhir = round($nilaiDosen->nilai_dosen, 1);
     }
+
+    $grade = '-';
+    if ($nilaiAkhir !== null) {
+        $grade = match(true) {
+            $nilaiAkhir >= 85 => 'A',
+            $nilaiAkhir >= 75 => 'B',
+            $nilaiAkhir >= 65 => 'C',
+            $nilaiAkhir >= 55 => 'D',
+            default           => 'E',
+        };
+    }
+
+    $totalLogbook = $logbook->count();
+    $totalLaporan = $laporan->count();
+
+    $logbookTerbaru = \App\Models\LogbookHarian::where('mahasiswa_id', $mhs?->id)
+        ->orderBy('created_at', 'desc')
+        ->take(5)
+        ->get();
+
+    $stats = [
+        'total_logbook'    => $totalLogbook,
+        'logbook_verified' => $logbook->where('status', 'disetujui')->count(),
+        'nilai_akhir'      => $nilaiAkhir ?? 0,
+        'grade'            => $grade,
+    ];
+
+    return view('mahasiswa.dashboard', compact(
+        'mhs', 'logbook', 'laporan',
+        'nilaiManager', 'nilaiDosen', 'stats',
+        'nilaiAkhir', 'grade', 'totalLogbook', 'totalLaporan',
+        'logbookTerbaru', 'proyekDitugaskan', 'supervisiList'
+    ));
+}
 }

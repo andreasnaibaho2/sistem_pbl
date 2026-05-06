@@ -23,8 +23,9 @@ class MahasiswaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nim'  => 'required|unique:mahasiswa,nim',
-            'nama' => 'required|string|max:100',
+            'nim'   => 'required|unique:mahasiswa,nim',
+            'nama'  => 'required|string|max:100',
+            'prodi' => 'required|in:mekatronika,otomasi,informatika',
         ]);
 
         $user = User::create([
@@ -32,6 +33,7 @@ class MahasiswaController extends Controller
             'email'    => $request->nim . '@pbl.com',
             'password' => Hash::make($request->nim),
             'role'     => 'mahasiswa',
+            'prodi'    => $request->prodi,
         ]);
 
         Mahasiswa::create([
@@ -51,8 +53,9 @@ class MahasiswaController extends Controller
     public function update(Request $request, Mahasiswa $mahasiswa)
     {
         $request->validate([
-            'nim'  => 'required|unique:mahasiswa,nim,' . $mahasiswa->id,
-            'nama' => 'required|string|max:100',
+            'nim'   => 'required|unique:mahasiswa,nim,' . $mahasiswa->id,
+            'nama'  => 'required|string|max:100',
+            'prodi' => 'required|in:mekatronika,otomasi,informatika',
         ]);
 
         $mahasiswa->update([
@@ -60,7 +63,10 @@ class MahasiswaController extends Controller
             'nama' => $request->nama,
         ]);
 
-        $mahasiswa->user->update(['name' => $request->nama]);
+        $mahasiswa->user->update([
+            'name'  => $request->nama,
+            'prodi' => $request->prodi,
+        ]);
 
         return redirect('/mahasiswa')->with('success', 'Data mahasiswa berhasil diupdate!');
     }
@@ -69,8 +75,10 @@ class MahasiswaController extends Controller
 {
     $mahasiswa->laporan()->delete();
     $mahasiswa->logbook()->delete();
-    $mahasiswa->penilaian()->delete();
-    $mahasiswa->kelas()->detach();
+    $mahasiswa->logbookHarian()->delete();
+    $mahasiswa->penilaianManager()->delete();
+    $mahasiswa->penilaianDosen()->delete();
+    $mahasiswa->proyek()->detach();
 
     $user = $mahasiswa->user;
     $mahasiswa->delete();

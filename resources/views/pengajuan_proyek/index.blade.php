@@ -1,135 +1,216 @@
 @extends('layouts.app')
-
-@section('title', 'Pengajuan Proyek')
-
+@section('title', 'Approval Proyek')
 @section('content')
-<div class="flex-1 flex flex-col">
 
-    {{-- HEADER --}}
-    <div class="flex justify-between items-end mb-8">
-        <div>
-            <h1 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
-                Pengajuan <span class="text-[#2dce89]">Proyek</span>
-            </h1>
-            <p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
-                {{ $pengajuan->count() }} pengajuan ditemukan
-            </p>
-        </div>
-        @if(auth()->user()->isManager())
-        <a href="{{ route('pengajuan_proyek.create') }}"
-           class="flex items-center gap-2 px-6 py-3.5 bg-[#004d4d] text-[#7fffd4] rounded-2xl text-xs font-black hover:scale-105 transition-all shadow-xl shadow-teal-900/20">
-            <span class="material-symbols-outlined text-base">add</span> AJUKAN PROYEK
-        </a>
-        @endif
+{{-- HEADER --}}
+<div class="flex items-center justify-between mb-8">
+    <div>
+        <h1 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
+    Approval <span class="text-[#2dce89]">Proyek</span>
+</h1>
+<p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
+    {{ $pengajuan->count() }} pengajuan ditemukan
+</p>
     </div>
+    @if(auth()->user()->isManager() || (auth()->user()->isDosen() && auth()->user()->role_aktif === 'manager_proyek'))
+    <a href="{{ route('pengajuan_proyek.create') }}"
+       class="flex items-center gap-2 px-5 py-3 bg-primary text-on-primary rounded-2xl text-xs font-black hover:opacity-90 hover:scale-105 transition-all shadow-lg">
+        <span class="material-symbols-outlined text-base">add</span> Ajukan Proyek
+    </a>
+    @endif
+</div>
 
-    {{-- STAT STRIP --}}
-    <div class="grid grid-cols-4 gap-4 mb-8">
-        <div class="bg-[#004d4d] text-white p-6 rounded-[1.5rem] flex flex-col justify-between shadow-sm">
-            <p class="text-[#7fffd4] text-[10px] font-black uppercase tracking-widest">Total Pengajuan</p>
-            <p class="text-5xl font-black italic tracking-tighter">{{ $pengajuan->count() }}</p>
-        </div>
-        <div class="bg-white border-2 border-amber-200 p-6 rounded-[1.5rem] flex flex-col justify-between shadow-sm">
+{{-- STAT CARDS --}}
+@php
+    $cPending  = $pengajuan->where('status','pending')->count();
+    $cApproved = $pengajuan->where('status','approved')->count();
+    $cRejected = $pengajuan->where('status','rejected')->count();
+@endphp
+<div class="grid grid-cols-4 gap-5 mb-8">
+    <div class="relative overflow-hidden rounded-[2rem] p-7 flex flex-col justify-between shadow-xl h-36" style="background:#004d4d;">
+        <p class="text-[#7fffd4] text-[10px] font-black uppercase tracking-widest">Total Pengajuan</p>
+        <p class="text-5xl font-black italic tracking-tighter text-white">{{ $pengajuan->count() }}</p>
+        <span class="material-symbols-outlined absolute -right-3 -bottom-3 text-white/5" style="font-size:100px;">rocket_launch</span>
+    </div>
+    <div class="bg-white rounded-[2rem] border-2 border-amber-200 p-7 flex flex-col justify-between h-36 shadow-sm">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
             <p class="text-amber-500 text-[10px] font-black uppercase tracking-widest">Menunggu</p>
-            <p class="text-4xl font-black italic tracking-tighter text-amber-500">
-                {{ $pengajuan->where('status', 'pending')->count() }}
-            </p>
         </div>
-        <div class="bg-white border-2 border-[#7fffd4] p-6 rounded-[1.5rem] flex flex-col justify-between shadow-sm">
-            <p class="text-[#004d4d] text-[10px] font-black uppercase tracking-widest">Disetujui</p>
-            <p class="text-4xl font-black italic tracking-tighter text-[#004d4d]">
-                {{ $pengajuan->where('status', 'approved')->count() }}
-            </p>
-        </div>
-        <div class="bg-white border-2 border-red-100 p-6 rounded-[1.5rem] flex flex-col justify-between shadow-sm">
-            <p class="text-red-400 text-[10px] font-black uppercase tracking-widest">Ditolak</p>
-            <p class="text-4xl font-black italic tracking-tighter text-red-400">
-                {{ $pengajuan->where('status', 'rejected')->count() }}
-            </p>
-        </div>
+        <p class="text-5xl font-black italic tracking-tighter text-on-surface">{{ $cPending }}</p>
     </div>
-
-    {{-- TABLE --}}
-    <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-        <table class="w-full text-left">
-            <thead>
-                <tr class="bg-gray-50/50 border-b border-gray-100">
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 w-10">#</th>
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Proyek</th>
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Manager</th>
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400">Periode</th>
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Kebutuhan</th>
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Status</th>
-                    <th class="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50">
-                @forelse($pengajuan as $idx => $p)
-                <tr class="hover:bg-teal-50/30 transition-colors">
-                    <td class="px-8 py-5 text-[10px] font-black text-gray-300">{{ $idx + 1 }}</td>
-
-                    <td class="px-8 py-5">
-                        <div class="flex items-center gap-4">
-                            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#008080] to-[#004d4d] flex items-center justify-center text-white shadow-md flex-shrink-0">
-                                <span class="material-symbols-outlined text-xl">rocket_launch</span>
-                            </div>
-                            <div>
-                                <span class="font-bold text-[#004d4d] block leading-none">{{ $p->judul_proyek }}</span>
-                                <span class="text-[10px] text-gray-400 font-medium mt-0.5 block uppercase tracking-wider">{{ $p->kode_pengajuan }}</span>
-                            </div>
-                        </div>
-                    </td>
-
-                    <td class="px-8 py-5">
-                        <span class="text-xs font-bold text-gray-600">{{ $p->manager->name ?? '-' }}</span>
-                    </td>
-
-                    <td class="px-8 py-5">
-                        <span class="text-xs font-bold text-gray-600 block">{{ $p->tanggal_mulai->format('d M Y') }}</span>
-                        <span class="text-[10px] text-gray-400">s/d {{ $p->tanggal_selesai->format('d M Y') }}</span>
-                    </td>
-
-                    <td class="px-8 py-5 text-center">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-700 border border-teal-100 rounded-xl text-[10px] font-black">
-                            <span class="material-symbols-outlined text-sm">group</span>
-                            {{ $p->getTotalMahasiswa() }} mhs
-                        </span>
-                    </td>
-
-                    <td class="px-8 py-5 text-center">
-                        @if($p->status === 'approved')
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 border border-green-100 rounded-xl text-[10px] font-black uppercase">
-                                <span class="material-symbols-outlined text-sm">check_circle</span> Disetujui
-                            </span>
-                        @elseif($p->status === 'rejected')
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-500 border border-red-100 rounded-xl text-[10px] font-black uppercase">
-                                <span class="material-symbols-outlined text-sm">cancel</span> Ditolak
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-500 border border-amber-100 rounded-xl text-[10px] font-black uppercase">
-                                <span class="material-symbols-outlined text-sm">pending</span> Menunggu
-                            </span>
-                        @endif
-                    </td>
-
-                    <td class="px-8 py-5 text-center">
-                        <a href="{{ route('pengajuan_proyek.show', $p->id) }}"
-                           class="p-2.5 text-gray-400 hover:text-[#004d4d] hover:bg-teal-50 rounded-xl transition-all border border-transparent hover:border-teal-100 inline-flex"
-                           title="Detail">
-                            <span class="material-symbols-outlined text-base">visibility</span>
-                        </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="px-8 py-20 text-center opacity-40">
-                        <span class="material-symbols-outlined text-5xl text-gray-300">rocket_launch</span>
-                        <p class="font-black italic text-gray-400 mt-2">Belum ada pengajuan proyek.</p>
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="bg-white rounded-[2rem] border-2 border-emerald-200 p-7 flex flex-col justify-between h-36 shadow-sm">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+            <p class="text-emerald-600 text-[10px] font-black uppercase tracking-widest">Disetujui</p>
+        </div>
+        <p class="text-5xl font-black italic tracking-tighter text-on-surface">{{ $cApproved }}</p>
+    </div>
+    <div class="bg-white rounded-[2rem] border-2 border-red-200 p-7 flex flex-col justify-between h-36 shadow-sm">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
+            <p class="text-red-500 text-[10px] font-black uppercase tracking-widest">Ditolak</p>
+        </div>
+        <p class="text-5xl font-black italic tracking-tighter text-on-surface">{{ $cRejected }}</p>
     </div>
 </div>
+
+{{-- FILTER --}}
+<div class="flex items-center gap-3 mb-5">
+    @foreach(['semua'=>'Semua','pending'=>'Menunggu','approved'=>'Disetujui','rejected'=>'Ditolak'] as $val=>$lbl)
+    <button onclick="filterStatus('{{ $val }}')"
+        data-status="{{ $val }}"
+        class="status-btn px-4 py-2.5 rounded-xl text-[10px] font-black border transition-all
+        {{ $val==='semua' ? 'bg-primary text-on-primary border-primary' : 'bg-white text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary' }}">
+        {{ $lbl }}
+        @if($val === 'pending' && $cPending > 0)
+            <span class="ml-1 px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-black">{{ $cPending }}</span>
+        @endif
+    </button>
+    @endforeach
+
+    <div class="relative ml-auto max-w-xs w-full">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+        <input type="text" id="searchProyek" oninput="filterProyek()" placeholder="Cari proyek..."
+            class="w-full pl-9 pr-4 py-2.5 bg-white rounded-xl border border-outline-variant/20 text-xs font-medium text-on-surface focus:outline-none focus:border-primary">
+    </div>
+</div>
+
+{{-- TABLE --}}
+<div class="bg-white rounded-[2rem] shadow-sm border border-outline-variant/20 overflow-hidden">
+    <table class="w-full text-left">
+        <thead>
+            <tr class="border-b border-outline-variant/10 bg-surface-container-low/30">
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline w-10">#</th>
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Proyek</th>
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Manager</th>
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Periode</th>
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Mahasiswa</th>
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Status</th>
+                <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Aksi</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/10">
+            @forelse($pengajuan as $idx => $p)
+            @php
+                $statusColor = match($p->status) {
+                    'approved' => 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                    'rejected' => 'bg-red-50 text-red-500 border-red-100',
+                    default    => 'bg-amber-50 text-amber-500 border-amber-100',
+                };
+                $statusIcon = match($p->status) {
+                    'approved' => 'check_circle',
+                    'rejected' => 'cancel',
+                    default    => 'pending',
+                };
+                $statusLabel = match($p->status) {
+                    'approved' => 'Disetujui',
+                    'rejected' => 'Ditolak',
+                    default    => 'Menunggu',
+                };
+            @endphp
+            <tr class="proyek-row hover:bg-surface-container-lowest transition-colors group"
+                data-status="{{ $p->status }}"
+                data-judul="{{ strtolower($p->judul_proyek) }}">
+                <td class="px-7 py-5 text-[10px] font-black text-outline/40">{{ $idx + 1 }}</td>
+                <td class="px-7 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-on-primary text-base">rocket_launch</span>
+                        </div>
+                        <div>
+                            <p class="font-black text-on-surface text-sm leading-none">{{ $p->judul_proyek }}</p>
+                            <p class="text-[10px] text-outline font-mono mt-0.5 uppercase">{{ $p->kode_pengajuan }}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-7 py-5">
+                    <p class="text-sm font-bold text-on-surface-variant">{{ $p->manager->name ?? '-' }}</p>
+                </td>
+                <td class="px-7 py-5">
+                    <p class="text-xs font-bold text-on-surface-variant">{{ $p->tanggal_mulai->format('d M Y') }}</p>
+                    <p class="text-[10px] text-outline">s/d {{ $p->tanggal_selesai->format('d M Y') }}</p>
+                </td>
+                <td class="px-7 py-5 text-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-container text-primary rounded-xl text-[10px] font-black">
+                        <span class="material-symbols-outlined text-sm">group</span>
+                        {{ $p->getTotalMahasiswa() }}
+                    </span>
+                </td>
+                <td class="px-7 py-5 text-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-[10px] font-black {{ $statusColor }}">
+                        <span class="material-symbols-outlined text-sm">{{ $statusIcon }}</span>
+                        {{ $statusLabel }}
+                    </span>
+                </td>
+                <td class="px-7 py-5">
+                    <div class="flex items-center justify-center gap-2">
+                        <a href="{{ route('pengajuan_proyek.show', $p->id) }}"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black text-on-primary shadow-md hover:scale-105 transition-all"
+                           style="background:#004d4d;">
+                            <span class="material-symbols-outlined text-sm">visibility</span> Detail
+                        </a>
+                        @if(auth()->user()->isAdmin())
+                        <form action="{{ route('pengajuan_proyek.destroy', $p->id) }}" method="POST"
+                              onsubmit="return confirm('Hapus proyek ini?')">
+                            @csrf @method('DELETE')
+                            <button type="submit"
+                                class="p-2.5 text-outline hover:text-white hover:bg-red-500 rounded-xl transition-all"
+                                title="Hapus">
+                                <span class="material-symbols-outlined text-base">delete</span>
+                            </button>
+                        </form>
+                        @endif
+                    </div>
+                </td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="7" class="px-7 py-20 text-center">
+                    <span class="material-symbols-outlined text-5xl text-outline-variant/40 block mb-3">rocket_launch</span>
+                    <p class="font-black italic text-on-surface-variant/40 text-sm">Belum ada pengajuan proyek.</p>
+                </td>
+            </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div id="emptyFilterProyek" class="hidden px-7 py-16 text-center">
+        <span class="material-symbols-outlined text-5xl text-outline-variant/40 block mb-3">search_off</span>
+        <p class="font-black italic text-on-surface-variant/40 text-sm">Tidak ada proyek ditemukan.</p>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+let activeStatus = 'semua';
+
+function filterProyek() {
+    const q = document.getElementById('searchProyek').value.toLowerCase();
+    const rows = document.querySelectorAll('.proyek-row');
+    let visible = 0;
+    rows.forEach(r => {
+        const matchStatus = activeStatus === 'semua' || r.dataset.status === activeStatus;
+        const matchJudul  = !q || r.dataset.judul.includes(q);
+        const show = matchStatus && matchJudul;
+        r.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    document.getElementById('emptyFilterProyek').classList.toggle('hidden', visible > 0);
+}
+
+function filterStatus(status) {
+    activeStatus = status;
+    document.querySelectorAll('.status-btn').forEach(btn => {
+        const isActive = btn.dataset.status === status;
+        btn.className = 'status-btn px-4 py-2.5 rounded-xl text-[10px] font-black border transition-all ' +
+            (isActive
+                ? 'bg-primary text-on-primary border-primary'
+                : 'bg-white text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary');
+    });
+    filterProyek();
+}
+</script>
+@endpush

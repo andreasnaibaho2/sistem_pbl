@@ -6,10 +6,15 @@
 <div class="max-w-5xl mx-auto px-4 py-6">
 
     {{-- Header --}}
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Rekap Logbook Mingguan</h1>
-        <p class="text-sm text-gray-500 mt-1">Kelola dan ajukan rekap logbook harian per minggu ke dosen pengampu.</p>
-    </div>
+<div class="mb-6">
+    <a href="{{ route('logbook_harian.index') }}"
+        class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-3 transition">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Kembali ke Logbook Harian
+    </a>
+    <h1 class="text-2xl font-bold text-gray-800">Rekap Logbook Mingguan</h1>
+    <p class="text-sm text-gray-500 mt-1">Kelola dan ajukan rekap logbook harian per minggu ke dosen pengampu.</p>
+</div>
 
     {{-- Flash Message --}}
     @if(session('success'))

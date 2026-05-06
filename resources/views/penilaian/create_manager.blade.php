@@ -23,8 +23,121 @@ foreach ($semuaAspek as $fieldName => $aspek) {
 }
 @endphp
 
+<style>
+/* ── Level Columns ── */
+.level-col {
+    flex: 1;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+.level-col:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.10); }
+
+/* Kurang */
+.level-col.kurang { background:#fff5f5; border-color:#fecaca; }
+.level-col.kurang:hover { border-color:#f87171; }
+.level-col.kurang .lc-header { background:#fee2e2; }
+.level-col.kurang .lc-title { color:#dc2626; }
+.level-col.kurang .lc-range { color:#ef4444; }
+.level-col.kurang.active { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,0.18); background:#fff0f0; }
+.level-col.kurang.active .lc-header { background:#ef4444; }
+.level-col.kurang.active .lc-title { color:#fff; }
+.level-col.kurang.active .lc-range { color:#fecaca; }
+.level-col.kurang .subpoin-btn .sp-poin { background:#fee2e2; color:#dc2626; }
+.level-col.kurang .subpoin-btn.selected { border-color:#ef4444; color:#dc2626; background:#fff; }
+.level-col.kurang .subpoin-btn.selected .sp-poin { background:#ef4444; color:#fff; }
+
+/* Cukup */
+.level-col.cukup { background:#fffbeb; border-color:#fde68a; }
+.level-col.cukup:hover { border-color:#f59e0b; }
+.level-col.cukup .lc-header { background:#fef3c7; }
+.level-col.cukup .lc-title { color:#d97706; }
+.level-col.cukup .lc-range { color:#f59e0b; }
+.level-col.cukup.active { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.18); background:#fffbeb; }
+.level-col.cukup.active .lc-header { background:#f59e0b; }
+.level-col.cukup.active .lc-title { color:#fff; }
+.level-col.cukup.active .lc-range { color:#fef3c7; }
+.level-col.cukup .subpoin-btn .sp-poin { background:#fef3c7; color:#d97706; }
+.level-col.cukup .subpoin-btn.selected { border-color:#f59e0b; color:#d97706; background:#fff; }
+.level-col.cukup .subpoin-btn.selected .sp-poin { background:#f59e0b; color:#fff; }
+
+/* Baik */
+.level-col.baik { background:#f0fdf4; border-color:#bbf7d0; }
+.level-col.baik:hover { border-color:#22c55e; }
+.level-col.baik .lc-header { background:#dcfce7; }
+.level-col.baik .lc-title { color:#16a34a; }
+.level-col.baik .lc-range { color:#22c55e; }
+.level-col.baik.active { border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,0.18); background:#ecfdf5; }
+.level-col.baik.active .lc-header { background:#22c55e; }
+.level-col.baik.active .lc-title { color:#fff; }
+.level-col.baik.active .lc-range { color:#dcfce7; }
+.level-col.baik .subpoin-btn .sp-poin { background:#dcfce7; color:#16a34a; }
+.level-col.baik .subpoin-btn.selected { border-color:#22c55e; color:#16a34a; background:#fff; }
+.level-col.baik .subpoin-btn.selected .sp-poin { background:#22c55e; color:#fff; }
+
+.level-col .lc-header {
+    padding: 10px 12px;
+    border-radius: 11px 11px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.level-col .lc-body { padding: 10px 12px 12px; }
+.level-col .lc-title { font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.07em; }
+.level-col .lc-range { font-size:10px; font-weight:700; margin-top:1px; }
+.level-col .lc-desc  { font-size:11.5px; color:#6b7280; line-height:1.55; min-height:48px; }
+
+/* Sub-poin */
+.subpoin-wrap { display:none; margin-top:8px; border-top:1px solid rgba(0,0,0,0.07); padding-top:8px; }
+.level-col.active .subpoin-wrap { display:block; }
+
+.subpoin-btn {
+    width:100%; text-align:left; padding:7px 9px;
+    border-radius:8px; font-size:11.5px; color:#374151;
+    background:rgba(255,255,255,0.6); border:1.5px solid transparent;
+    cursor:pointer; transition:all 0.15s;
+    display:flex; align-items:flex-start; gap:7px; margin-bottom:4px;
+}
+.subpoin-btn:last-child { margin-bottom:0; }
+.subpoin-btn:hover { background:rgba(255,255,255,0.95); border-color:rgba(0,0,0,0.10); }
+.subpoin-btn .sp-poin {
+    font-size:10.5px; font-weight:900; min-width:26px; height:20px;
+    border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+/* check icon di header */
+.lc-check {
+    width:18px; height:18px; border-radius:50%;
+    background:rgba(255,255,255,0.3);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.2s;
+}
+.level-col.active .lc-check { opacity:1; }
+
+/* progress bar kategori */
+.kat-progress-bar { height:6px; border-radius:99px; background:#e5e7eb; overflow:hidden; width:120px; }
+.kat-progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#004d4d,#10b981); transition:width 0.3s ease; }
+
+/* hasil pilih badge */
+.nilai-result {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:4px 12px; border-radius:99px;
+    font-size:12px; font-weight:800;
+    opacity:0; transform:scale(0.85);
+    transition:all 0.2s ease;
+}
+.nilai-result.show { opacity:1; transform:scale(1); }
+
+.aspek-row { padding:20px 28px; border-bottom:1px solid #f3f4f6; }
+.aspek-row:last-child { border-bottom:none; }
+</style>
+
 <div class="max-w-4xl mx-auto">
-    <div class="mb-8">
+    <div class="mb-6">
         <h1 class="text-2xl font-black text-on-surface tracking-tight">Input Penilaian</h1>
         <p class="text-sm text-on-surface-variant mt-0.5">Manager Proyek — bobot 55%</p>
     </div>
@@ -36,6 +149,21 @@ foreach ($semuaAspek as $fieldName => $aspek) {
         </ul>
     </div>
     @endif
+
+    {{-- LEGENDA --}}
+    <div class="flex items-center gap-2 mb-6 flex-wrap">
+        <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mr-1">Level:</span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style="background:#fee2e2;color:#dc2626;">
+            <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Kurang &middot; 10–42
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style="background:#fef3c7;color:#d97706;">
+            <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Cukup &middot; 43–74
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style="background:#dcfce7;color:#16a34a;">
+            <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span> Baik &middot; 75–100
+        </span>
+        <span class="text-[11px] text-on-surface-variant ml-2">← Klik level, lalu pilih poin spesifik</span>
+    </div>
 
     <form action="{{ route('penilaian.manager.store') }}" method="POST" id="formPenilaian">
         @csrf
@@ -69,9 +197,16 @@ foreach ($semuaAspek as $fieldName => $aspek) {
 
         {{-- ASPEK PER KATEGORI --}}
         @foreach($perKategori as $namaKategori => $aspekList)
-        @php $ikon = $ikonMap[$namaKategori] ?? 'star'; $slugKat = strtolower(str_replace(' ','-',$namaKategori)); @endphp
+        @php
+            $ikon    = $ikonMap[$namaKategori] ?? 'star';
+            $slugKat = strtolower(str_replace(' ', '-', $namaKategori));
+        @endphp
+
         <div class="bg-white rounded-[1.5rem] border border-outline-variant/20 shadow-sm mb-6 overflow-hidden">
-            <div class="flex items-center justify-between px-7 py-5 border-b border-outline-variant/10" style="background:linear-gradient(135deg,#f0fdf4,#ffffff);">
+
+            {{-- Header Kategori --}}
+            <div class="flex items-center justify-between px-7 py-5 border-b border-outline-variant/10"
+                 style="background:linear-gradient(135deg,#f0fdf4,#ffffff);">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#004d4d;">
                         <span class="material-symbols-outlined text-lg" style="color:#7fffd4;">{{ $ikon }}</span>
@@ -81,40 +216,138 @@ foreach ($semuaAspek as $fieldName => $aspek) {
                         <p class="text-[10px] text-on-surface-variant">{{ count($aspekList) }} aspek</p>
                     </div>
                 </div>
-                <span class="text-2xl font-black text-primary" id="total-{{ $slugKat }}">0%</span>
+                <div class="flex items-center gap-3">
+                    <div class="kat-progress-bar">
+                        <div class="kat-progress-fill" id="bar-{{ $slugKat }}" style="width:0%"></div>
+                    </div>
+                    <span class="text-xl font-black text-primary min-w-[48px] text-right"
+                          id="total-{{ $slugKat }}">0%</span>
+                </div>
             </div>
 
+            {{-- Aspek-aspek --}}
             @foreach($aspekList as $fieldName => $aspek)
-            @php $slugKat2 = strtolower(str_replace(' ','-',$aspek['kategori'])); @endphp
-            <div class="px-7 py-6 border-b border-outline-variant/10 last:border-b-0">
+            @php
+                $slugKat2   = strtolower(str_replace(' ', '-', $aspek['kategori']));
+                $opsiKurang = array_filter($aspek['opsi'], fn($p) => $p <= 42,            ARRAY_FILTER_USE_KEY);
+                $opsiCukup  = array_filter($aspek['opsi'], fn($p) => $p >= 43 && $p <= 74, ARRAY_FILTER_USE_KEY);
+                $opsiBaik   = array_filter($aspek['opsi'], fn($p) => $p >= 75,            ARRAY_FILTER_USE_KEY);
+
+                // Preview teks ringkas tiap level (2 kalimat pertama)
+                $descKurang = count($opsiKurang) ? implode(' ', array_slice(array_values($opsiKurang), 0, 2)) : '-';
+                $descCukup  = count($opsiCukup)  ? implode(' ', array_slice(array_values($opsiCukup),  0, 2)) : '-';
+                $descBaik   = count($opsiBaik)   ? implode(' ', array_slice(array_values($opsiBaik),   0, 2)) : '-';
+            @endphp
+
+            <div class="aspek-row">
+                {{-- Judul aspek + hasil pilih --}}
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="font-black text-on-surface text-sm">{{ $aspek['label'] }}</p>
                         <p class="text-[10px] text-on-surface-variant">Bobot {{ $aspek['bobot'] }}%</p>
                     </div>
-                    <div class="text-right">
-                        <span class="text-[10px] text-on-surface-variant">Poin terpilih</span>
-                        <p class="font-black text-primary text-lg" id="preview-{{ $fieldName }}">—</p>
-                    </div>
+                    <span class="nilai-result" id="result-badge-{{ $fieldName }}"></span>
                 </div>
+
                 <input type="hidden" name="{{ $fieldName }}" id="val-{{ $fieldName }}" value="">
-                <div class="space-y-2" id="opsi-{{ $fieldName }}">
-                    @foreach($aspek['opsi'] as $poin => $deskripsi)
-                    <div class="rubrik-opsi-item flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all"
-                         style="border: 2px solid transparent;"
-                         data-field="{{ $fieldName }}"
-                         data-poin="{{ $poin }}"
-                         data-slugkat="{{ $slugKat2 }}"
-                         onclick="pilihOpsi('{{ $fieldName }}', {{ $poin }}, '{{ $slugKat2 }}', this)">
-                        <div class="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all"
-                             style="border-color: #d1d5db;"
-                             id="dot-{{ $fieldName }}-{{ $poin }}"></div>
-                        <span class="text-sm text-on-surface-variant leading-relaxed select-none">{{ $deskripsi }}</span>
+
+                {{-- 3 KOLOM LEVEL --}}
+                <div class="flex gap-3">
+
+                    {{-- KURANG --}}
+                    @if(count($opsiKurang) > 0)
+                    <div class="level-col kurang" id="col-{{ $fieldName }}-kurang"
+                         onclick="selectLevel('{{ $fieldName }}', 'kurang', '{{ $slugKat2 }}')">
+                        <div class="lc-header">
+                            <div>
+                                <div class="lc-title">Kurang</div>
+                                <div class="lc-range">Poin 10–42</div>
+                            </div>
+                            <div class="lc-check">
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 6l3 3 5-5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="lc-body">
+                            <p class="lc-desc">{{ Str::limit($descKurang, 85) }}</p>
+                            <div class="subpoin-wrap" id="sub-{{ $fieldName }}-kurang">
+                                @foreach($opsiKurang as $poin => $desc)
+                                <button type="button" class="subpoin-btn" id="sp-{{ $fieldName }}-{{ $poin }}"
+                                    onclick="event.stopPropagation(); pilihSubPoin('{{ $fieldName }}', {{ $poin }}, 'kurang', '{{ $slugKat2 }}', this)">
+                                    <span class="sp-poin">{{ $poin }}</span>
+                                    <span>{{ $desc }}</span>
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
-                    @endforeach
-                </div>
+                    @endif
+
+                    {{-- CUKUP --}}
+                    @if(count($opsiCukup) > 0)
+                    <div class="level-col cukup" id="col-{{ $fieldName }}-cukup"
+                         onclick="selectLevel('{{ $fieldName }}', 'cukup', '{{ $slugKat2 }}')">
+                        <div class="lc-header">
+                            <div>
+                                <div class="lc-title">Cukup</div>
+                                <div class="lc-range">Poin 43–74</div>
+                            </div>
+                            <div class="lc-check">
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 6l3 3 5-5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="lc-body">
+                            <p class="lc-desc">{{ Str::limit($descCukup, 85) }}</p>
+                            <div class="subpoin-wrap" id="sub-{{ $fieldName }}-cukup">
+                                @foreach($opsiCukup as $poin => $desc)
+                                <button type="button" class="subpoin-btn" id="sp-{{ $fieldName }}-{{ $poin }}"
+                                    onclick="event.stopPropagation(); pilihSubPoin('{{ $fieldName }}', {{ $poin }}, 'cukup', '{{ $slugKat2 }}', this)">
+                                    <span class="sp-poin">{{ $poin }}</span>
+                                    <span>{{ $desc }}</span>
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- BAIK --}}
+                    @if(count($opsiBaik) > 0)
+                    <div class="level-col baik" id="col-{{ $fieldName }}-baik"
+                         onclick="selectLevel('{{ $fieldName }}', 'baik', '{{ $slugKat2 }}')">
+                        <div class="lc-header">
+                            <div>
+                                <div class="lc-title">Baik</div>
+                                <div class="lc-range">Poin 75–100</div>
+                            </div>
+                            <div class="lc-check">
+                                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                    <path d="M2 6l3 3 5-5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="lc-body">
+                            <p class="lc-desc">{{ Str::limit($descBaik, 85) }}</p>
+                            <div class="subpoin-wrap" id="sub-{{ $fieldName }}-baik">
+                                @foreach($opsiBaik as $poin => $desc)
+                                <button type="button" class="subpoin-btn" id="sp-{{ $fieldName }}-{{ $poin }}"
+                                    onclick="event.stopPropagation(); pilihSubPoin('{{ $fieldName }}', {{ $poin }}, 'baik', '{{ $slugKat2 }}', this)">
+                                    <span class="sp-poin">{{ $poin }}</span>
+                                    <span>{{ $desc }}</span>
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                </div>{{-- end 3 kolom --}}
             </div>
             @endforeach
+
         </div>
         @endforeach
 
@@ -132,6 +365,9 @@ foreach ($semuaAspek as $fieldName => $aspek) {
                 <div>
                     <p class="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-1">Estimasi Nilai Manager (55%)</p>
                     <p class="text-4xl font-black text-primary" id="grandTotal">0.00</p>
+                    <p class="text-[10px] mt-2" id="infoAspekBelum" style="color:#9ca3af;">
+                        Semua aspek harus dipilih sebelum menyimpan.
+                    </p>
                 </div>
                 <button type="submit"
                     class="flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-black text-white shadow-xl transition-all hover:scale-105"
@@ -140,7 +376,6 @@ foreach ($semuaAspek as $fieldName => $aspek) {
                     Simpan Penilaian
                 </button>
             </div>
-            <p class="text-[10px] text-on-surface-variant mt-3" id="infoAspekBelum">Semua aspek harus dipilih sebelum menyimpan.</p>
         </div>
     </form>
 </div>
@@ -148,73 +383,113 @@ foreach ($semuaAspek as $fieldName => $aspek) {
 
 @push('scripts')
 <script>
-const bobotMap = {
+var bobotMap = {
     @foreach($semuaAspek as $fieldName => $aspek)
     '{{ $fieldName }}': {{ $aspek['bobot'] }},
     @endforeach
 };
-const kategoriMap = {
+var kategoriMap = {
     @foreach($semuaAspek as $fieldName => $aspek)
     '{{ $fieldName }}': '{{ strtolower(str_replace(' ', '-', $aspek['kategori'])) }}',
     @endforeach
 };
-const semuaField = {!! json_encode(array_keys($semuaAspek)) !!};
-const nilaiTerpilih = {};
+var semuaField    = {!! json_encode(array_keys($semuaAspek)) !!};
+var nilaiTerpilih = {};
 
-function pilihOpsi(fieldName, poin, slugKat, elKlik) {
-    document.querySelectorAll('#opsi-' + fieldName + ' .rubrik-opsi-item').forEach(function(el) {
-        el.style.borderColor = 'transparent';
-        el.style.backgroundColor = '';
-        var dot = document.getElementById('dot-' + fieldName + '-' + el.dataset.poin);
-        if (dot) { dot.style.borderColor = '#d1d5db'; dot.innerHTML = ''; }
+// Step 1 — Klik kolom level → expand sub-poin (toggle)
+function selectLevel(fieldName, level, slugKat) {
+    var levels = ['kurang', 'cukup', 'baik'];
+    var colEl  = document.getElementById('col-' + fieldName + '-' + level);
+    if (!colEl) return;
+    var sudahAktif = colEl.classList.contains('active');
+
+    // Tutup semua kolom level di aspek ini
+    levels.forEach(function(lv) {
+        var el = document.getElementById('col-' + fieldName + '-' + lv);
+        if (el) el.classList.remove('active');
     });
-    elKlik.style.borderColor = '#004d4d';
-    elKlik.style.backgroundColor = 'rgba(0,77,77,0.05)';
-    var dotPilih = document.getElementById('dot-' + fieldName + '-' + poin);
-    if (dotPilih) {
-        dotPilih.style.borderColor = '#004d4d';
-        dotPilih.innerHTML = '<div style="width:10px;height:10px;background:#004d4d;border-radius:50%;"></div>';
+
+    // Buka kolom yang diklik (kecuali sudah aktif → toggle tutup)
+    if (!sudahAktif) {
+        colEl.classList.add('active');
     }
+}
+
+// Step 2 — Klik sub-poin → simpan nilai & update UI
+function pilihSubPoin(fieldName, poin, level, slugKat, elBtn) {
+    // Reset semua sub-poin button di semua level field ini
+    ['kurang', 'cukup', 'baik'].forEach(function(lv) {
+        var wrap = document.getElementById('sub-' + fieldName + '-' + lv);
+        if (!wrap) return;
+        wrap.querySelectorAll('.subpoin-btn').forEach(function(b) { b.classList.remove('selected'); });
+    });
+
+    elBtn.classList.add('selected');
+
+    // Simpan nilai ke hidden input
     document.getElementById('val-' + fieldName).value = poin;
-    document.getElementById('preview-' + fieldName).textContent = poin;
     nilaiTerpilih[fieldName] = poin;
+
+    // Update result badge
+    var badge  = document.getElementById('result-badge-' + fieldName);
+    var colors = { kurang:['#fee2e2','#dc2626'], cukup:['#fef3c7','#d97706'], baik:['#dcfce7','#16a34a'] };
+    var labels = { kurang:'Kurang', cukup:'Cukup', baik:'Baik' };
+    badge.style.background = colors[level][0];
+    badge.style.color      = colors[level][1];
+    badge.innerHTML = '<span style="font-size:15px;font-weight:900;">' + poin + '</span>'
+                    + '<span style="font-size:10px;font-weight:700;opacity:0.75;">' + labels[level] + '</span>';
+    badge.classList.add('show');
+
     updateTotalKategori(slugKat);
     updateGrandTotal();
 }
 
 function updateTotalKategori(slugKat) {
-    var total = 0, max = 0;
+    var total = 0, bobotTotal = 0;
     Object.keys(kategoriMap).forEach(function(field) {
         if (kategoriMap[field] !== slugKat) return;
-        max += bobotMap[field];
-        if (nilaiTerpilih[field] !== undefined) total += nilaiTerpilih[field] * (bobotMap[field] / 100);
+        bobotTotal += bobotMap[field];
+        if (nilaiTerpilih[field] !== undefined)
+            total += nilaiTerpilih[field] * (bobotMap[field] / 100);
     });
-    var el = document.getElementById('total-' + slugKat);
-    if (el) el.textContent = max > 0 ? Math.round((total / max) * 100) + '%' : '0%';
+    var pct = bobotTotal > 0 ? Math.round((total / bobotTotal) * 100) : 0;
+    var el  = document.getElementById('total-' + slugKat);
+    var bar = document.getElementById('bar-'   + slugKat);
+    if (el)  el.textContent  = pct + '%';
+    if (bar) bar.style.width = pct + '%';
 }
 
 function updateGrandTotal() {
     var total = 0;
     semuaField.forEach(function(field) {
-        if (nilaiTerpilih[field] !== undefined) total += nilaiTerpilih[field] * (bobotMap[field] / 100);
+        if (nilaiTerpilih[field] !== undefined)
+            total += nilaiTerpilih[field] * (bobotMap[field] / 100);
     });
     document.getElementById('grandTotal').textContent = total.toFixed(2);
+
     var belum = semuaField.filter(function(f) { return nilaiTerpilih[f] === undefined; });
-    var info = document.getElementById('infoAspekBelum');
-    if (belum.length === 0) { info.textContent = '✓ Semua aspek sudah dipilih.'; info.style.color = '#004d4d'; }
-    else { info.textContent = belum.length + ' aspek belum dipilih.'; info.style.color = '#9ca3af'; }
+    var info  = document.getElementById('infoAspekBelum');
+    if (belum.length === 0) {
+        info.textContent = '✓ Semua aspek sudah dipilih.';
+        info.style.color = '#004d4d';
+    } else {
+        info.textContent = belum.length + ' aspek belum dipilih.';
+        info.style.color = '#9ca3af';
+    }
 }
 
+// Proyek → populate mahasiswa
 document.getElementById('proyekSelect').addEventListener('change', function() {
-    var opt = this.options[this.selectedIndex];
+    var opt  = this.options[this.selectedIndex];
     var list = opt.dataset.mahasiswa ? JSON.parse(opt.dataset.mahasiswa) : [];
-    var sel = document.getElementById('mahasiswaSelect');
+    var sel  = document.getElementById('mahasiswaSelect');
     sel.innerHTML = '<option value="">-- Pilih Mahasiswa --</option>';
     list.forEach(function(m) {
         sel.innerHTML += '<option value="' + m.id + '">' + m.nama + ' (' + m.nim + ')</option>';
     });
 });
 
+// Submit guard
 document.getElementById('formPenilaian').addEventListener('submit', function(e) {
     var belum = semuaField.filter(function(f) { return nilaiTerpilih[f] === undefined; });
     if (belum.length > 0) {

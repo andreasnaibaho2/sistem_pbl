@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('approval-dosen/{user}/approve', [ApprovalDosenController::class, 'approve'])->name('approval.approve');
         Route::patch('approval-dosen/{user}/reject', [ApprovalDosenController::class, 'reject'])->name('approval.reject');
         Route::patch('pengajuan-proyek/{pengajuan_proyek}/approve', [PengajuanProyekController::class, 'approve'])->name('pengajuan_proyek.approve');
+        Route::delete('pengajuan-proyek/{pengajuan_proyek}', [PengajuanProyekController::class, 'destroy'])->name('pengajuan_proyek.destroy');
         Route::patch('pengajuan-proyek/{pengajuan_proyek}/reject', [PengajuanProyekController::class, 'reject'])->name('pengajuan_proyek.reject');
 
         Route::get('pengajuan-proyek/{pengajuan_proyek}/assign', [PengajuanProyekController::class, 'assignMahasiswa'])->name('pengajuan_proyek.assign');
@@ -65,13 +66,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('laporan-admin', [LaporanAdminController::class, 'index'])->name('laporan.admin');
 
         // Supervisi Matkul
-        Route::get('admin/supervisi', [App\Http\Controllers\Admin\SupervisiMatkulController::class, 'index'])->name('admin.supervisi.index');
-        Route::get('admin/supervisi/create', [App\Http\Controllers\Admin\SupervisiMatkulController::class, 'create'])->name('admin.supervisi.create');
-        Route::post('admin/supervisi', [App\Http\Controllers\Admin\SupervisiMatkulController::class, 'store'])->name('admin.supervisi.store');
-        Route::delete('admin/supervisi/{supervisi}', [App\Http\Controllers\Admin\SupervisiMatkulController::class, 'destroy'])->name('admin.supervisi.destroy');
+        Route::get('admin/supervisi', [SupervisiMatkulController::class, 'index'])->name('admin.supervisi.index');
+        Route::get('admin/supervisi/create', [SupervisiMatkulController::class, 'create'])->name('admin.supervisi.create');
+        Route::post('admin/supervisi', [SupervisiMatkulController::class, 'store'])->name('admin.supervisi.store');
+        Route::delete('admin/supervisi/{supervisi}', [SupervisiMatkulController::class, 'destroy'])->name('admin.supervisi.destroy');
     });
 
-    // Manager Proyek only (role permanen manager_proyek ATAU dosen dengan role_aktif manager_proyek)
+    // Manager Proyek only
     Route::middleware('role:manager_proyek,dosen')->group(function () {
         Route::patch('logbook/{logbook}/verifikasi', [LogbookController::class, 'verifikasi'])->name('logbook.verifikasi');
         Route::get('pengajuan-proyek/create', [PengajuanProyekController::class, 'create'])->name('pengajuan_proyek.create');
@@ -95,21 +96,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('pengajuan-proyek/{pengajuan_proyek}', [PengajuanProyekController::class, 'show'])->name('pengajuan_proyek.show');
 
     // Penilaian — Manager
-Route::middleware('role:manager_proyek,dosen')->group(function () {
-    Route::get('penilaian/manager/create', [PenilaianController::class, 'createManager'])->name('penilaian.manager.create');
-    Route::post('penilaian/manager', [PenilaianController::class, 'storeManager'])->name('penilaian.manager.store');
-});
+    Route::middleware('role:manager_proyek,dosen')->group(function () {
+        Route::get('penilaian/manager/create', [PenilaianController::class, 'createManager'])->name('penilaian.manager.create');
+        Route::post('penilaian/manager', [PenilaianController::class, 'storeManager'])->name('penilaian.manager.store');
+    });
 
-// Penilaian — Dosen Pengampu
-Route::middleware('role:dosen')->group(function () {
-    Route::get('penilaian/dosen/create', [PenilaianController::class, 'createDosen'])->name('penilaian.dosen.create');
-    Route::post('penilaian/dosen', [PenilaianController::class, 'storeDosen'])->name('penilaian.dosen.store');
-});
+    // Penilaian — Dosen Pengampu
+    Route::middleware('role:dosen')->group(function () {
+        Route::get('penilaian/dosen/create', [PenilaianController::class, 'createDosen'])->name('penilaian.dosen.create');
+        Route::post('penilaian/dosen', [PenilaianController::class, 'storeDosen'])->name('penilaian.dosen.store');
+    });
 
-// Penilaian — Index (semua role)
-Route::middleware('role:admin,manager_proyek,dosen,mahasiswa')->group(function () {
-    Route::get('penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
-});
+    // Penilaian — Index (semua role)
+    Route::middleware('role:admin,manager_proyek,dosen,mahasiswa')->group(function () {
+        Route::get('penilaian', [PenilaianController::class, 'index'])->name('penilaian.index');
+    });
 
     // Verifikasi Laporan (dosen)
     Route::middleware('role:dosen')->group(function () {
@@ -139,17 +140,20 @@ Route::middleware('role:admin,manager_proyek,dosen,mahasiswa')->group(function (
     });
     Route::patch('logbook-harian/{logbook_harian}/verifikasi', [LogbookHarianController::class, 'verifikasi'])->name('logbook_harian.verifikasi');
 
-    // Logbook Mingguan - Mahasiswa
+    // ── Logbook Mingguan Show — di luar group, akses semua role ──
+    Route::get('logbook-mingguan/{logbookMingguan}', [LogbookMingguanController::class, 'show'])
+        ->name('logbook_mingguan.show')
+        ->middleware('role:mahasiswa,manager_proyek,admin,dosen');
+
+    // Logbook Mingguan - Mahasiswa (tanpa show)
     Route::middleware('role:mahasiswa')->group(function () {
         Route::get('logbook-mingguan', [LogbookMingguanController::class, 'index'])->name('logbook_mingguan.index');
         Route::post('logbook-mingguan/generate', [LogbookMingguanController::class, 'generate'])->name('logbook_mingguan.generate');
-        Route::get('logbook-mingguan/{logbookMingguan}', [LogbookMingguanController::class, 'show'])->name('logbook_mingguan.show');
     });
 
-    // Logbook Mingguan - Manager & Admin
+    // Logbook Mingguan - Manager & Admin (tanpa show)
     Route::middleware('role:manager_proyek,admin,dosen')->group(function () {
         Route::patch('logbook-mingguan/{logbookMingguan}/verifikasi', [LogbookMingguanController::class, 'verifikasi'])->name('logbook_mingguan.verifikasi');
-        Route::get('logbook-mingguan/{logbookMingguan}', [LogbookMingguanController::class, 'show'])->name('logbook_mingguan.show');
     });
 });
 
