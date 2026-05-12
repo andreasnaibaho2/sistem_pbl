@@ -50,6 +50,53 @@
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-surface-container-low text-sm text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
             </div>
 
+            {{-- Akses Role --}}
+            <div>
+                <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Akses Role</label>
+                <div class="grid grid-cols-1 gap-3">
+
+                    <label class="flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all
+                        {{ old('akses_role', 'dosen_pengampu') === 'dosen_pengampu' ? 'border-[#2dce89] bg-teal-50/50' : 'border-gray-100 hover:border-[#2dce89]' }}">
+                        <input type="radio" name="akses_role" value="dosen_pengampu" class="accent-[#004d4d]"
+                            {{ old('akses_role', 'dosen_pengampu') === 'dosen_pengampu' ? 'checked' : '' }}>
+                        <div class="w-10 h-10 rounded-xl bg-[#2dce89] flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[#004d4d] text-xl">school</span>
+                        </div>
+                        <div>
+                            <p class="font-black text-[#004d4d] text-sm uppercase">Dosen Pengampu</p>
+                            <p class="text-[10px] text-gray-400">Verifikasi laporan & beri nilai (45%)</p>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all
+                        {{ old('akses_role') === 'manager_proyek' ? 'border-[#2dce89] bg-teal-50/50' : 'border-gray-100 hover:border-[#2dce89]' }}">
+                        <input type="radio" name="akses_role" value="manager_proyek" class="accent-[#004d4d]"
+                            {{ old('akses_role') === 'manager_proyek' ? 'checked' : '' }}>
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#004d4d;">
+                            <span class="material-symbols-outlined text-[#7fffd4] text-xl">rocket_launch</span>
+                        </div>
+                        <div>
+                            <p class="font-black text-[#004d4d] text-sm uppercase">Manager Proyek</p>
+                            <p class="text-[10px] text-gray-400">Kelola & ajukan proyek PBL (55%)</p>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all
+                        {{ old('akses_role') === 'keduanya' ? 'border-[#2dce89] bg-teal-50/50' : 'border-gray-100 hover:border-[#2dce89]' }}">
+                        <input type="radio" name="akses_role" value="keduanya" class="accent-[#004d4d]"
+                            {{ old('akses_role') === 'keduanya' ? 'checked' : '' }}>
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#004d4d] to-[#2dce89]">
+                            <span class="material-symbols-outlined text-white text-xl">swap_horiz</span>
+                        </div>
+                        <div>
+                            <p class="font-black text-[#004d4d] text-sm uppercase">Keduanya</p>
+                            <p class="text-[10px] text-gray-400">Dosen bisa switch role saat login</p>
+                        </div>
+                    </label>
+
+                </div>
+            </div>
+
             <div class="flex items-start gap-2 p-3 rounded-xl bg-primary-container/40 border border-primary-container">
                 <span class="material-symbols-outlined text-sm text-primary mt-0.5">info</span>
                 <p class="text-xs text-primary">Password default = <strong>password123</strong></p>

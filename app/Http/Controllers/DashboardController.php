@@ -39,30 +39,34 @@ class DashboardController extends Controller
 
     private function adminDashboard()
 {
-    $mahasiswaData = Mahasiswa::with('user')->get()->map(function ($m) {
-        $nilaiManager = PenilaianManager::where('mahasiswa_id', $m->id)->first();
-        $nilaiDosen   = PenilaianDosen::where('mahasiswa_id', $m->id)->first();
-        return [
-            'id'              => $m->id,
-            'name'            => $m->nama,
-            'nim'             => $m->nim,
-            'prodi'           => $m->user->prodi ?? null,
-            'nilai_supervisi' => $nilaiDosen   ? round($nilaiDosen->nilai_dosen, 1)     : null,
-            'nilai_proyek'    => $nilaiManager ? round($nilaiManager->nilai_manager, 1) : null,
-        ];
-    });
-
     $stats = [
-        'total_mahasiswa'   => Mahasiswa::count(),
-        'total_dosen'       => Dosen::count(),
-        'total_proyek'      => PengajuanProyek::count(),
-        'total_proyek_aktif'=> PengajuanProyek::where('status', 'approved')->count(),
-        'pending_dosen'     => User::whereIn('role', ['dosen', 'manager_proyek'])
-                                   ->where('status', 'pending')->count(),
-        'pending_proyek'    => PengajuanProyek::where('status', 'pending')->count(),
+        'total_mahasiswa'    => Mahasiswa::count(),
+        'total_proyek_aktif' => PengajuanProyek::where('status', 'approved')->count(),
+        'pending_akun'       => User::whereIn('role', ['dosen', 'manager_proyek', 'mahasiswa'])
+                                    ->where('status', 'pending')->count(),
+        'pending_proyek'     => PengajuanProyek::where('status', 'pending')->count(),
     ];
 
-    return view('admin.dashboard', compact('mahasiswaData', 'stats'));
+    // Progress monitoring: mahasiswa yang sudah dinilai lengkap (ada nilai manager + dosen)
+    $total        = $stats['total_mahasiswa'] ?: 1;
+    $sudahDinilai = Mahasiswa::whereHas('penilaianManager')->whereHas('penilaianDosen')->count();
+    $stats['progress_pct'] = round($sudahDinilai / $total * 100);
+
+    // Logbook mingguan belum diverifikasi (terbaru)
+    $logbookPending = LogbookMingguan::where('status', 'pending')
+        ->with(['mahasiswa'])
+        ->latest()
+        ->take(5)
+        ->get();
+
+    // Laporan belum diverifikasi (terbaru)
+    $laporanPending = LaporanMkPpi::where('status_verifikasi', 'pending')
+        ->with(['mahasiswa'])
+        ->latest()
+        ->take(5)
+        ->get();
+
+    return view('admin.dashboard', compact('stats', 'logbookPending', 'laporanPending'));
 }
 
     private function managerDashboard()

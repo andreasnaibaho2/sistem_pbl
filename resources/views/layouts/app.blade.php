@@ -43,19 +43,20 @@
 <body class="bg-[#f4f7f6] font-sans text-gray-800 overflow-hidden h-screen flex">
 
 @php
-    $authUser   = auth()->user();
+    $authUser    = auth()->user();
     $roleEfektif = $authUser->getRoleEfektif();
-    $roleLabel  = match($roleEfektif) {
+    $roleLabel   = match($roleEfektif) {
         'admin'          => 'Administrator',
         'manager_proyek' => 'Manager Proyek',
         'dosen_pengampu' => 'Dosen Pengampu',
         'mahasiswa'      => 'Mahasiswa',
         default          => $roleEfektif,
     };
-    $isDosen        = $authUser->role === 'dosen';
-    $roleAktif      = $authUser->role_aktif ?? 'dosen_pengampu';
+    $isDosen          = $authUser->role === 'dosen';
+    $roleAktif        = $authUser->role_aktif ?? 'dosen_pengampu';
     $isDosenAsManager = $isDosen && $roleAktif === 'manager_proyek';
     $isDosenAsDosen   = $isDosen && $roleAktif === 'dosen_pengampu';
+    $aksesRoleDosen   = $authUser->akses_role ?? 'keduanya';
 @endphp
 
     {{-- ================= SIDEBAR ================= --}}
@@ -104,7 +105,7 @@
                         <a href="{{ route('dosen.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'dosen') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Dosen</a>
                         <a href="{{ route('admin.prodi.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/prodi') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Data Program Studi</a>
                         <a href="{{ route('admin.matkul.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/matkul') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Mata Kuliah</a>
-<a href="{{ route('admin.supervisi.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/supervisi') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Supervisi Matkul</a>
+                        <a href="{{ route('admin.supervisi.index') }}" class="block py-2.5 text-xs font-bold transition-colors {{ str_starts_with($path,'admin/supervisi') ? 'text-[#7fffd4]' : 'text-white/40 hover:text-[#7fffd4]' }}">Supervisi Matkul</a>
                     </div>
                 </div>
                 <div class="h-px bg-white/5 my-3 mx-4"></div>
@@ -163,7 +164,8 @@
                 <a href="{{ route('logbook_mingguan.daftar_verifikasi') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'logbook-mingguan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">rate_review</span><span>Verifikasi Logbook</span>
                 </a>
-                {{-- Switch role --}}
+                {{-- Switch role: hanya tampil jika akses keduanya --}}
+                @if($aksesRoleDosen === 'keduanya')
                 <div class="h-px bg-white/5 my-3 mx-4"></div>
                 <form action="{{ route('pilih.role.simpan') }}" method="POST">
                     @csrf
@@ -173,6 +175,7 @@
                         <span class="text-xs">Ganti ke Dosen Pengampu</span>
                     </button>
                 </form>
+                @endif
 
             {{-- DOSEN sebagai DOSEN PENGAMPU --}}
             @elseif($isDosenAsDosen)
@@ -186,7 +189,8 @@
                 <a href="{{ route('laporan.index') }}" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all {{ str_starts_with($path,'laporan') ? 'bg-[#7fffd4] text-[#004d4d] font-black shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-[#7fffd4]' }}">
                     <span class="material-symbols-outlined text-xl">description</span><span>Verifikasi Laporan</span>
                 </a>
-                {{-- Switch role --}}
+                {{-- Switch role: hanya tampil jika akses keduanya --}}
+                @if($aksesRoleDosen === 'keduanya')
                 <div class="h-px bg-white/5 my-3 mx-4"></div>
                 <form action="{{ route('pilih.role.simpan') }}" method="POST">
                     @csrf
@@ -196,6 +200,7 @@
                         <span class="text-xs">Ganti ke Manager Proyek</span>
                     </button>
                 </form>
+                @endif
 
             {{-- MANAGER PROYEK permanen --}}
             @elseif($authUser->isManager())

@@ -16,6 +16,26 @@ class PenilaianDosen extends Model
         'nilai_dosen', 'catatan_dosen',
     ];
 
+    // ── Accessor ──────────────────────────────────────────────
+    public function getLiteracySkillsAttribute(): ?float
+    {
+        if (is_null($this->lit_informasi)) return null;
+        return round(($this->lit_informasi + $this->lit_media + $this->lit_teknologi) / 3, 1);
+    }
+
+    public function getPresentasiAttribute(): ?float
+    {
+        if (is_null($this->pr_konten)) return null;
+        return round(($this->pr_konten + $this->pr_visual + $this->pr_kosakata + $this->pr_tanya_jawab + $this->pr_mata_gerak) / 5, 1);
+    }
+
+    public function getLaporanAkhirAttribute(): ?float
+    {
+        if (is_null($this->la_penulisan)) return null;
+        return round(($this->la_penulisan + $this->la_pilihan_kata + $this->la_konten) / 3, 1);
+    }
+
+    // ── Relasi ────────────────────────────────────────────────
     public function mahasiswa()
     {
         return $this->belongsTo(Mahasiswa::class);

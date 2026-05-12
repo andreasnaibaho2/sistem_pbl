@@ -19,7 +19,6 @@ class PenilaianController extends Controller
         $user = auth()->user();
 
         if ($user->isManager()) {
-            // Manager lihat penilaian_manager miliknya
             $proyekIds = PengajuanProyek::where('manager_id', $user->id)->pluck('id');
             $penilaian = PenilaianManager::with(['mahasiswa', 'pengajuanProyek'])
                 ->whereIn('pengajuan_proyek_id', $proyekIds)
@@ -27,47 +26,48 @@ class PenilaianController extends Controller
             return view('penilaian.index_manager', compact('penilaian'));
 
         } elseif ($user->roleAktifDosen()) {
-            // Dosen (mode dosen_pengampu) lihat penilaian_dosen miliknya
             $penilaian = PenilaianDosen::with(['mahasiswa', 'supervisiMatkul.mataKuliah'])
                 ->where('dosen_id', $user->dosen->id)
                 ->get();
             return view('penilaian.index_dosen', compact('penilaian'));
 
         } elseif ($user->isMahasiswa()) {
-            $mahasiswa   = $user->mahasiswa;
+            $mahasiswa    = $user->mahasiswa;
             $nilaiManager = PenilaianManager::where('mahasiswa_id', $mahasiswa->id)->first();
             $nilaiDosen   = PenilaianDosen::with('supervisiMatkul.mataKuliah')
                 ->where('mahasiswa_id', $mahasiswa->id)->get();
             return view('penilaian.index_mahasiswa', compact('nilaiManager', 'nilaiDosen', 'mahasiswa'));
 
         } else {
-            // Admin — lihat semua
-            $penilaianManager = PenilaianManager::with(['mahasiswa', 'pengajuanProyek'])->get();
-            $penilaianDosen   = PenilaianDosen::with(['mahasiswa', 'supervisiMatkul.mataKuliah'])->get();
-            return view('penilaian.index_admin', compact('penilaianManager', 'penilaianDosen'));
+            // Admin — gabungkan per mahasiswa
+            $mahasiswaList = Mahasiswa::with([
+                'user',
+                'penilaianManager.pengajuanProyek',
+                'penilaianDosen.supervisiMatkul.mataKuliah',
+            ])->get();
+
+            return view('penilaian.index_admin', compact('mahasiswaList'));
         }
     }
 
     // =====================================================================
-    // CREATE MANAGER — form input penilaian oleh Manager Proyek
+    // CREATE MANAGER
     // =====================================================================
     public function createManager()
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    if (!$user->isManager()) {
-        abort(403);
+        if (!$user->isManager()) {
+            abort(403);
+        }
+
+        $proyekList = PengajuanProyek::where('manager_id', $user->id)
+            ->where('status', 'approved')
+            ->with(['mahasiswa'])
+            ->get();
+
+        return view('penilaian.create_manager', compact('proyekList'));
     }
-
-    $proyekList = PengajuanProyek::where('manager_id', $user->id)
-        ->where('status', 'approved')
-        ->with(['mahasiswa'])
-        ->get();
-
-    
-
-    return view('penilaian.create_manager', compact('proyekList'));
-}
 
     // =====================================================================
     // STORE MANAGER
@@ -117,7 +117,6 @@ class PenilaianController extends Controller
             'catatan_manager'      => $request->catatan_manager,
         ]);
 
-        // Hitung nilai_manager (55%)
         $penilaian->nilai_manager = $this->hitungNilaiManager($penilaian);
         $penilaian->save();
 
@@ -126,8 +125,7 @@ class PenilaianController extends Controller
     }
 
     // =====================================================================
-    // CREATE DOSEN — form input penilaian oleh Dosen Pengampu
-    // berdasarkan supervisi_matkul
+    // CREATE DOSEN
     // =====================================================================
     public function createDosen()
     {
@@ -137,7 +135,6 @@ class PenilaianController extends Controller
             abort(403);
         }
 
-        // Ambil semua supervisi matkul yang diampu dosen ini
         $supervisiList = SupervisiMatkul::where('dosen_id', $user->dosen->id)
             ->with(['mahasiswa', 'mataKuliah'])
             ->get();
@@ -172,7 +169,6 @@ class PenilaianController extends Controller
             'la_konten'           => 'required|integer|min:0|max:100',
         ]);
 
-        // Pastikan supervisi ini memang milik dosen yang login
         $supervisi = SupervisiMatkul::where('id', $request->supervisi_matkul_id)
             ->where('dosen_id', $user->dosen->id)
             ->firstOrFail();
@@ -198,7 +194,6 @@ class PenilaianController extends Controller
             'catatan_dosen'   => $request->catatan_dosen,
         ]);
 
-        // Hitung nilai_dosen (45%)
         $penilaian->nilai_dosen = $this->hitungNilaiDosen($penilaian);
         $penilaian->save();
 
@@ -211,27 +206,17 @@ class PenilaianController extends Controller
     // =====================================================================
     private function hitungNilaiManager(PenilaianManager $p): float
     {
-        // Learning Skills 20%
         $ls = (($p->ls_critical_thinking + $p->ls_kolaborasi + $p->ls_kreativitas + $p->ls_komunikasi) / 4) * 0.20;
-        // Life Skills 20%
         $lf = (($p->lf_fleksibilitas + $p->lf_kepemimpinan + $p->lf_produktivitas + $p->lf_social_skill) / 4) * 0.20;
-        // Laporan Proyek 15%
         $lp = (($p->lp_rpp + $p->lp_logbook + $p->lp_dokumen_projek) / 3) * 0.15;
-
-        // Total dari porsi 55%: skala ke 55
         return round(($ls + $lf + $lp) / 0.55 * 0.55, 2);
-        // Atau lebih simpel: nilai mentah * 0.55
     }
 
     private function hitungNilaiDosen(PenilaianDosen $p): float
     {
-        // Literacy Skills 15%
         $lit = (($p->lit_informasi + $p->lit_media + $p->lit_teknologi) / 3) * 0.15;
-        // Presentasi 15%
         $pr  = (($p->pr_konten + $p->pr_visual + $p->pr_kosakata + $p->pr_tanya_jawab + $p->pr_mata_gerak) / 5) * 0.15;
-        // Laporan Akhir 15%
         $la  = (($p->la_penulisan + $p->la_pilihan_kata + $p->la_konten) / 3) * 0.15;
-
         return round(($lit + $pr + $la) / 0.45 * 0.45, 2);
     }
 

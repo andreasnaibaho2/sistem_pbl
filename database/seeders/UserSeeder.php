@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
             'name'       => 'Admin Manager',
             'email'      => 'admin@pbl.com',
             'password'   => Hash::make('password123'),
-            'role'       => 'manager_proyek',
+            'role'       => 'admin',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

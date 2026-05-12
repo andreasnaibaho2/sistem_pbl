@@ -1,0 +1,125 @@
+Folder PATH listing for volume Windows
+Volume serial number is 0684-4964
+C:\XAMPP8\HTDOCS\SISTEM_PBL_LARAVEL\RESOURCES\VIEWS
+¦   dashboard.blade.php
+¦   welcome.blade.php
+¦   
++---admin
+¦   ¦   approval_akun.blade.php
+¦   ¦   approval_dosen.blade.php
+¦   ¦   dashboard.blade.php
+¦   ¦   data_prodi.blade.php
+¦   ¦   index.blade.php
+¦   ¦   
+¦   +---matkul
+¦   ¦       index.blade.php
+¦   ¦       
+¦   +---supervisi_matkul
+¦           create.blade.php
+¦           index.blade.php
+¦           
++---auth
+¦       confirm-password.blade.php
+¦       forgot-password.blade.php
+¦       login.blade.php
+¦       pilih_role.blade.php
+¦       register.blade.php
+¦       reset-password.blade.php
+¦       verify-email.blade.php
+¦       
++---components
+¦       application-logo.blade.php
+¦       auth-session-status.blade.php
+¦       danger-button.blade.php
+¦       dropdown-link.blade.php
+¦       dropdown.blade.php
+¦       input-error.blade.php
+¦       input-label.blade.php
+¦       modal.blade.php
+¦       nav-link.blade.php
+¦       primary-button.blade.php
+¦       responsive-nav-link.blade.php
+¦       secondary-button.blade.php
+¦       text-input.blade.php
+¦       
++---dosen
+¦       create.blade.php
+¦       dashboard.blade.php
+¦       edit.blade.php
+¦       index.blade.php
+¦       
++---kelas
+¦       create.blade.php
+¦       edit.blade.php
+¦       index.blade.php
+¦       show.blade.php
+¦       
++---laporan
+¦       admin.blade.php
+¦       create.blade.php
+¦       index.blade.php
+¦       show.blade.php
+¦       
++---layouts
+¦       app.blade.php
+¦       guest.blade.php
+¦       index.blade.php
+¦       navigation.blade.php
+¦       
++---logbook
+¦       create.blade.php
+¦       index.blade.php
+¦       show.blade.php
+¦       
++---logbook_harian
+¦       create.blade.php
+¦       edit.blade.php
+¦       index.blade.php
+¦       rekap.blade.php
+¦       show.blade.php
+¦       
++---logbook_mingguan
+¦       index.blade.php
+¦       pdf_template.blade.php
+¦       verifikasi.blade.php
+¦       
++---mahasiswa
+¦       create.blade.php
+¦       dashboard.blade.php
+¦       edit.blade.php
+¦       feedback.blade.php
+¦       index.blade.php
+¦       nilai.blade.php
+¦       
++---manager
+¦       dashboard.blade.php
+¦       
++---pengajuan_proyek
+¦       assign.blade.php
+¦       create.blade.php
+¦       index.blade.php
+¦       show.blade.php
+¦       
++---penilaian
+¦       bobot.blade.php
+¦       create.blade.php
+¦       create_dosen.blade.php
+¦       create_manager.blade.php
+¦       index.blade.php
+¦       index_admin.blade.php
+¦       index_dosen.blade.php
+¦       index_manager.blade.php
+¦       rubrik.blade.php
+¦       show.blade.php
+¦       
++---profile
+¦   ¦   edit.blade.php
+¦   ¦   
+¦   +---partials
+¦           delete-user-form.blade.php
+¦           update-password-form.blade.php
+¦           update-profile-information-form.blade.php
+¦           
++---proyek_pbl
+        index.blade.php
+        

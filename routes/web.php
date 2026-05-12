@@ -25,11 +25,23 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Pilih Role (khusus dosen) ──
     Route::get('/pilih-role', function () {
-        if (auth()->user()->role !== 'dosen') {
-            return redirect('/dashboard');
-        }
-        return view('auth.pilih_role');
-    })->name('pilih.role');
+    $user = auth()->user();
+    if ($user->role !== 'dosen') {
+        return redirect('/dashboard');
+    }
+
+    $akses = $user->akses_role ?? 'keduanya';
+    if ($akses === 'dosen_pengampu') {
+        $user->update(['role_aktif' => 'dosen_pengampu']);
+        return redirect('/dashboard');
+    }
+    if ($akses === 'manager_proyek') {
+        $user->update(['role_aktif' => 'manager_proyek']);
+        return redirect('/dashboard');
+    }
+
+    return view('auth.pilih_role');
+})->name('pilih.role');
 
     Route::post('/pilih-role', function (\Illuminate\Http\Request $request) {
         $request->validate([
@@ -55,6 +67,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('approval-dosen', [ApprovalDosenController::class, 'index'])->name('approval.index');
         Route::patch('approval-dosen/{user}/approve', [ApprovalDosenController::class, 'approve'])->name('approval.approve');
+        Route::patch('approval-dosen/{user}/approve-role', [ApprovalDosenController::class, 'approveWithRole'])->name('approval.approve.role');
         Route::patch('approval-dosen/{user}/reject', [ApprovalDosenController::class, 'reject'])->name('approval.reject');
         Route::patch('pengajuan-proyek/{pengajuan_proyek}/approve', [PengajuanProyekController::class, 'approve'])->name('pengajuan_proyek.approve');
         Route::delete('pengajuan-proyek/{pengajuan_proyek}', [PengajuanProyekController::class, 'destroy'])->name('pengajuan_proyek.destroy');

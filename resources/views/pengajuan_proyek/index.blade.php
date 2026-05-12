@@ -6,11 +6,11 @@
 <div class="flex items-center justify-between mb-8">
     <div>
         <h1 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
-    Approval <span class="text-[#2dce89]">Proyek</span>
-</h1>
-<p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
-    {{ $pengajuan->count() }} pengajuan ditemukan
-</p>
+            Approval <span class="text-[#2dce89]">Proyek</span>
+        </h1>
+        <p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
+            {{ $pengajuan->count() }} pengajuan ditemukan
+        </p>
     </div>
     @if(auth()->user()->isManager() || (auth()->user()->isDosen() && auth()->user()->role_aktif === 'manager_proyek'))
     <a href="{{ route('pengajuan_proyek.create') }}"
@@ -25,6 +25,10 @@
     $cPending  = $pengajuan->where('status','pending')->count();
     $cApproved = $pengajuan->where('status','approved')->count();
     $cRejected = $pengajuan->where('status','rejected')->count();
+
+    // Data untuk dropdown filter
+    $tahunList   = $pengajuan->map(fn($p) => $p->tanggal_mulai->format('Y'))->unique()->sortDesc()->values();
+    $managerList = $pengajuan->map(fn($p) => $p->manager)->filter()->unique('id')->sortBy('name')->values();
 @endphp
 <div class="grid grid-cols-4 gap-5 mb-8">
     <div class="relative overflow-hidden rounded-[2rem] p-7 flex flex-col justify-between shadow-xl h-36" style="background:#004d4d;">
@@ -55,24 +59,80 @@
     </div>
 </div>
 
-{{-- FILTER --}}
-<div class="flex items-center gap-3 mb-5">
-    @foreach(['semua'=>'Semua','pending'=>'Menunggu','approved'=>'Disetujui','rejected'=>'Ditolak'] as $val=>$lbl)
-    <button onclick="filterStatus('{{ $val }}')"
-        data-status="{{ $val }}"
-        class="status-btn px-4 py-2.5 rounded-xl text-[10px] font-black border transition-all
-        {{ $val==='semua' ? 'bg-primary text-on-primary border-primary' : 'bg-white text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary' }}">
-        {{ $lbl }}
-        @if($val === 'pending' && $cPending > 0)
-            <span class="ml-1 px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-black">{{ $cPending }}</span>
-        @endif
-    </button>
-    @endforeach
+{{-- FILTER BAR --}}
+<div class="bg-white rounded-[2rem] border border-outline-variant/20 shadow-sm px-7 py-5 mb-5">
+    <div class="flex flex-wrap items-center gap-3">
 
-    <div class="relative ml-auto max-w-xs w-full">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
-        <input type="text" id="searchProyek" oninput="filterProyek()" placeholder="Cari proyek..."
-            class="w-full pl-9 pr-4 py-2.5 bg-white rounded-xl border border-outline-variant/20 text-xs font-medium text-on-surface focus:outline-none focus:border-primary">
+        {{-- Search judul / kode --}}
+        <div class="relative w-64">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+            <input type="text" id="searchProyek" oninput="applyFilter()" placeholder="Cari judul atau kode proyek..."
+                class="w-full pl-9 pr-4 py-2.5 bg-surface-container-low rounded-xl border border-outline-variant/20 text-xs font-medium text-on-surface focus:outline-none focus:border-primary">
+        </div>
+
+        {{-- Divider --}}
+        <div class="h-6 w-px bg-outline-variant/20"></div>
+
+        {{-- Filter Status --}}
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black text-outline uppercase tracking-widest">Status:</span>
+            @foreach(['semua'=>'Semua','pending'=>'Menunggu','approved'=>'Disetujui','rejected'=>'Ditolak'] as $val=>$lbl)
+            <button onclick="setFilter('status','{{ $val }}')"
+                data-filter="status" data-value="{{ $val }}"
+                class="filter-btn px-3 py-2 rounded-xl text-[10px] font-black border transition-all
+                {{ $val==='semua' ? 'bg-primary text-on-primary border-primary' : 'bg-surface-container text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary' }}">
+                {{ $lbl }}
+                @if($val === 'pending' && $cPending > 0)
+                    <span class="ml-1 px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-black">{{ $cPending }}</span>
+                @endif
+            </button>
+            @endforeach
+        </div>
+
+        {{-- Divider --}}
+        <div class="h-6 w-px bg-outline-variant/20"></div>
+
+        {{-- Filter Tahun --}}
+        @if($tahunList->count() > 1)
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black text-outline uppercase tracking-widest">Tahun:</span>
+            <select id="filterTahun" onchange="applyFilter()"
+                class="py-2 pl-3 pr-8 bg-surface-container-low rounded-xl border border-outline-variant/20 text-xs font-black text-on-surface focus:outline-none focus:border-primary appearance-none cursor-pointer">
+                <option value="semua">Semua</option>
+                @foreach($tahunList as $tahun)
+                <option value="{{ $tahun }}">{{ $tahun }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Divider --}}
+        <div class="h-6 w-px bg-outline-variant/20"></div>
+        @endif
+
+        {{-- Filter Manager --}}
+        @if($managerList->count() > 1)
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black text-outline uppercase tracking-widest">Manager:</span>
+            <select id="filterManager" onchange="applyFilter()"
+                class="py-2 pl-3 pr-8 bg-surface-container-low rounded-xl border border-outline-variant/20 text-xs font-black text-on-surface focus:outline-none focus:border-primary appearance-none cursor-pointer">
+                <option value="semua">Semua</option>
+                @foreach($managerList as $mgr)
+                <option value="{{ $mgr->id }}">{{ $mgr->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+
+        {{-- Reset & Counter --}}
+        <div class="ml-auto flex items-center gap-3">
+            <span id="filterCounter" class="hidden text-[10px] font-black text-outline">
+                <span id="visibleCount">0</span> proyek ditemukan
+            </span>
+            <button onclick="resetFilter()" id="btnReset"
+                class="hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black border border-outline-variant/20 text-outline hover:text-red-500 hover:border-red-200 transition-all">
+                <span class="material-symbols-outlined text-sm">filter_alt_off</span> Reset
+            </button>
+        </div>
     </div>
 </div>
 
@@ -111,8 +171,12 @@
             @endphp
             <tr class="proyek-row hover:bg-surface-container-lowest transition-colors group"
                 data-status="{{ $p->status }}"
-                data-judul="{{ strtolower($p->judul_proyek) }}">
-                <td class="px-7 py-5 text-[10px] font-black text-outline/40">{{ $idx + 1 }}</td>
+                data-judul="{{ strtolower($p->judul_proyek) }}"
+                data-kode="{{ strtolower($p->kode_pengajuan) }}"
+                data-tahun="{{ $p->tanggal_mulai->format('Y') }}"
+                data-manager-id="{{ $p->manager_id }}">
+
+                <td class="px-7 py-5 text-[10px] font-black text-outline/40 row-num">{{ $idx + 1 }}</td>
                 <td class="px-7 py-5">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
@@ -175,9 +239,12 @@
         </tbody>
     </table>
 
-    <div id="emptyFilterProyek" class="hidden px-7 py-16 text-center">
+    <div id="emptyFilter" class="hidden px-7 py-16 text-center">
         <span class="material-symbols-outlined text-5xl text-outline-variant/40 block mb-3">search_off</span>
         <p class="font-black italic text-on-surface-variant/40 text-sm">Tidak ada proyek ditemukan.</p>
+        <button onclick="resetFilter()" class="mt-4 text-[10px] font-black text-primary hover:underline uppercase tracking-widest">
+            Reset Filter
+        </button>
     </div>
 </div>
 
@@ -185,32 +252,59 @@
 
 @push('scripts')
 <script>
-let activeStatus = 'semua';
+const activeFilters = { status: 'semua' };
 
-function filterProyek() {
-    const q = document.getElementById('searchProyek').value.toLowerCase();
-    const rows = document.querySelectorAll('.proyek-row');
-    let visible = 0;
+function setFilter(type, value) {
+    activeFilters[type] = value;
+    document.querySelectorAll(`[data-filter="${type}"]`).forEach(btn => {
+        const isActive = btn.dataset.value === value;
+        btn.className = 'filter-btn px-3 py-2 rounded-xl text-[10px] font-black border transition-all ' +
+            (isActive
+                ? 'bg-primary text-on-primary border-primary'
+                : 'bg-surface-container text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary');
+    });
+    applyFilter();
+}
+
+function applyFilter() {
+    const q         = document.getElementById('searchProyek').value.toLowerCase().trim();
+    const tahun     = document.getElementById('filterTahun')?.value   ?? 'semua';
+    const managerId = document.getElementById('filterManager')?.value ?? 'semua';
+    const rows      = document.querySelectorAll('.proyek-row');
+    let visible     = 0;
+
     rows.forEach(r => {
-        const matchStatus = activeStatus === 'semua' || r.dataset.status === activeStatus;
-        const matchJudul  = !q || r.dataset.judul.includes(q);
-        const show = matchStatus && matchJudul;
+        const matchSearch  = !q || r.dataset.judul.includes(q) || r.dataset.kode.includes(q);
+        const matchStatus  = activeFilters.status === 'semua' || r.dataset.status  === activeFilters.status;
+        const matchTahun   = tahun     === 'semua' || r.dataset.tahun              === tahun;
+        const matchManager = managerId === 'semua' || r.dataset.managerId          === managerId;
+
+        const show = matchSearch && matchStatus && matchTahun && matchManager;
         r.style.display = show ? '' : 'none';
         if (show) visible++;
     });
-    document.getElementById('emptyFilterProyek').classList.toggle('hidden', visible > 0);
+
+    // Nomor urut ulang
+    let num = 1;
+    rows.forEach(r => {
+        if (r.style.display !== 'none') r.querySelector('.row-num').textContent = num++;
+    });
+
+    document.getElementById('emptyFilter').classList.toggle('hidden', visible > 0);
+
+    const isFiltered = q || activeFilters.status !== 'semua' || tahun !== 'semua' || managerId !== 'semua';
+    document.getElementById('btnReset').classList.toggle('hidden', !isFiltered);
+    document.getElementById('filterCounter').classList.toggle('hidden', !isFiltered);
+    document.getElementById('visibleCount').textContent = visible;
 }
 
-function filterStatus(status) {
-    activeStatus = status;
-    document.querySelectorAll('.status-btn').forEach(btn => {
-        const isActive = btn.dataset.status === status;
-        btn.className = 'status-btn px-4 py-2.5 rounded-xl text-[10px] font-black border transition-all ' +
-            (isActive
-                ? 'bg-primary text-on-primary border-primary'
-                : 'bg-white text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary');
-    });
-    filterProyek();
+function resetFilter() {
+    document.getElementById('searchProyek').value = '';
+    const elTahun = document.getElementById('filterTahun');
+    const elMgr   = document.getElementById('filterManager');
+    if (elTahun) elTahun.value = 'semua';
+    if (elMgr)   elMgr.value   = 'semua';
+    setFilter('status', 'semua');
 }
 </script>
 @endpush

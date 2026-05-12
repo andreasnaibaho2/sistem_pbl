@@ -4,69 +4,73 @@
 
 @section('content')
 
+{{-- HEADER --}}
 <div class="flex items-center justify-between mb-8">
     <div>
-        <h1 class="text-2xl font-black text-on-surface tracking-tight">Approval Akun</h1>
-        <p class="text-sm text-on-surface-variant mt-0.5">Persetujuan akun dosen & manager baru</p>
+        <h1 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
+            Daftar <span class="text-[#2dce89]">Tunggu</span>
+        </h1>
+        <p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
+            Persetujuan Akun Dosen Baru
+        </p>
     </div>
-    <span class="px-4 py-2 rounded-full text-xs font-black bg-amber-100 text-amber-700">
+    <span class="px-5 py-2.5 rounded-2xl text-xs font-black text-white shadow-lg"
+          style="background:{{ $pendingDosen->count() > 0 ? '#f59e0b' : '#004d4d' }};">
         {{ $pendingDosen->count() }} Permintaan
     </span>
 </div>
 
-{{-- PENDING --}}
-<div class="mb-8">
-    <h2 class="text-base font-black text-on-surface mb-4">Menunggu Persetujuan</h2>
+@if(session('success'))
+<div class="mb-6 px-5 py-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold flex items-center gap-2">
+    <span class="material-symbols-outlined text-base">check_circle</span>
+    {{ session('success') }}
+</div>
+@endif
 
+{{-- PENDING --}}
+<div class="mb-10">
     @if($pendingDosen->isEmpty())
-    <div class="bg-white border border-outline-variant/30 rounded-[2rem] p-16 text-center shadow-sm">
-        <span class="material-symbols-outlined text-6xl text-outline-variant mb-4 block">how_to_reg</span>
-        <p class="font-black italic text-on-surface-variant/50 uppercase tracking-widest text-sm">Antrean Kosong</p>
-        <p class="text-xs text-on-surface-variant/40 mt-2">Tidak ada permintaan akun baru.</p>
+    <div class="bg-white border border-gray-100 rounded-[2rem] p-16 text-center shadow-sm">
+        <span class="material-symbols-outlined text-6xl text-gray-200 block mb-3">how_to_reg</span>
+        <p class="font-black italic text-gray-300 uppercase tracking-widest text-sm">Antrean Kosong</p>
+        <p class="text-xs text-gray-300 mt-2">Tidak ada permintaan akun baru.</p>
     </div>
     @else
-    <div class="bg-white rounded-[2rem] shadow-sm border border-outline-variant/20 overflow-hidden">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left">
             <thead>
-                <tr class="border-b border-outline-variant/10 bg-surface-container-low/50">
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Email</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">NIDN</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Nama</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Role</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Terdaftar</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-right">Tindakan</th>
+                <tr class="border-b border-gray-100 bg-gray-50/50">
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Email</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">NIDN</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Nama</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Terdaftar</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Tindakan</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-outline-variant/10">
+            <tbody class="divide-y divide-gray-50">
                 @foreach($pendingDosen as $u)
-                <tr class="hover:bg-surface-container-lowest transition-colors group">
+                <tr class="hover:bg-gray-50/50 transition-colors">
                     <td class="px-7 py-5">
-                        <div class="flex items-center gap-2 text-on-surface-variant">
-                            <span class="material-symbols-outlined text-primary text-base">mail</span>
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <span class="material-symbols-outlined text-[#2dce89] text-base">mail</span>
                             <span class="text-sm font-bold">{{ $u->email }}</span>
                         </div>
                     </td>
-                    <td class="px-7 py-5 text-center">
-                        <span class="px-3 py-1 rounded-lg bg-surface-container font-mono text-xs font-black text-on-surface-variant">
+                    <td class="px-7 py-5">
+                        <span class="px-3 py-1 rounded-lg bg-gray-100 font-mono text-xs font-black text-gray-600">
                             {{ $u->dosen?->nidn ?? '-' }}
                         </span>
                     </td>
                     <td class="px-7 py-5">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs text-[#7fffd4] shrink-0" style="background:#004d4d;">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs text-[#7fffd4] shrink-0"
+                                 style="background:#004d4d;">
                                 {{ strtoupper(substr($u->name, 0, 2)) }}
                             </div>
-                            <span class="font-black text-on-surface uppercase tracking-tight text-sm">{{ $u->name }}</span>
+                            <span class="font-black text-gray-800 text-sm">{{ $u->name }}</span>
                         </div>
                     </td>
-                    <td class="px-7 py-5 text-center">
-                        @php
-                            $roleColor = $u->role === 'manager_proyek' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
-                            $roleLabel = $u->role === 'manager_proyek' ? 'Manager Proyek' : 'Dosen Pengampu';
-                        @endphp
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $roleColor }}">{{ $roleLabel }}</span>
-                    </td>
-                    <td class="px-7 py-5 text-center text-xs text-on-surface-variant">
+                    <td class="px-7 py-5 text-center text-xs text-gray-400 font-bold">
                         {{ $u->created_at->format('d M Y') }}
                     </td>
                     <td class="px-7 py-5">
@@ -80,15 +84,13 @@
                                     Tolak
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('approval.approve', $u) }}">
-                                @csrf @method('PATCH')
-                                <button type="submit"
-                                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-[#004d4d] shadow-lg hover:scale-105 transition-all"
-                                    style="background:#7fffd4;">
-                                    <span class="material-symbols-outlined text-sm">check</span>
-                                    Setujui
-                                </button>
-                            </form>
+                            <button type="button"
+                                onclick="bukaPopup({{ $u->id }}, '{{ addslashes($u->name) }}')"
+                                class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-[#004d4d] shadow-lg hover:scale-105 transition-all"
+                                style="background:#7fffd4;">
+                                <span class="material-symbols-outlined text-sm">check</span>
+                                Setujui
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -101,48 +103,69 @@
 
 {{-- SUDAH DISETUJUI --}}
 <div>
-    <h2 class="text-base font-black text-on-surface mb-4">
-        Sudah Disetujui
-        <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">{{ $approvedDosen->count() }}</span>
-    </h2>
+    <div class="flex items-center gap-3 mb-5">
+        <h2 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
+            Sudah <span class="text-[#2dce89]">Disetujui</span>
+        </h2>
+        <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">
+            {{ $approvedDosen->count() }}
+        </span>
+    </div>
 
     @if($approvedDosen->isEmpty())
-    <div class="bg-white border border-outline-variant/30 rounded-[2rem] p-8 text-center shadow-sm">
-        <p class="text-sm text-on-surface-variant/40 font-black italic">Belum ada dosen yang disetujui.</p>
+    <div class="bg-white border border-gray-100 rounded-[2rem] p-8 text-center shadow-sm">
+        <p class="text-sm text-gray-300 font-black italic">Belum ada dosen yang disetujui.</p>
     </div>
     @else
-    <div class="bg-white rounded-[2rem] shadow-sm border border-outline-variant/20 overflow-hidden">
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left">
             <thead>
-                <tr class="border-b border-outline-variant/10 bg-surface-container-low/50">
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Nama</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Email</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">NIDN</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Role</th>
-                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Terdaftar</th>
+                <tr class="border-b border-gray-100 bg-gray-50/50">
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Nama</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Email</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">NIDN</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Akses Role</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Status</th>
+                    <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Terdaftar</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-outline-variant/10">
+            <tbody class="divide-y divide-gray-50">
                 @foreach($approvedDosen as $u)
-                <tr class="hover:bg-surface-container-lowest transition-colors">
+                @php
+                    $aksesLabel = match($u->akses_role ?? 'keduanya') {
+                        'manager_proyek' => 'Manager Proyek',
+                        'dosen_pengampu' => 'Dosen Pengampu',
+                        default          => 'Keduanya',
+                    };
+                    $aksesColor = match($u->akses_role ?? 'keduanya') {
+                        'manager_proyek' => 'bg-blue-100 text-blue-700',
+                        'dosen_pengampu' => 'bg-purple-100 text-purple-700',
+                        default          => 'bg-teal-100 text-teal-700',
+                    };
+                @endphp
+                <tr class="hover:bg-gray-50/50 transition-colors">
                     <td class="px-7 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center font-black text-xs text-primary shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center font-black text-xs text-[#004d4d] shrink-0">
                                 {{ strtoupper(substr($u->name, 0, 2)) }}
                             </div>
-                            <span class="font-semibold text-on-surface text-sm">{{ $u->name }}</span>
+                            <span class="font-semibold text-gray-800 text-sm">{{ $u->name }}</span>
                         </div>
                     </td>
-                    <td class="px-7 py-4 text-sm text-on-surface-variant">{{ $u->email }}</td>
-                    <td class="px-7 py-4 font-mono text-sm text-on-surface-variant">{{ $u->dosen?->nidn ?? '-' }}</td>
+                    <td class="px-7 py-4 text-sm text-gray-500">{{ $u->email }}</td>
+                    <td class="px-7 py-4 font-mono text-sm text-gray-500">{{ $u->dosen?->nidn ?? '-' }}</td>
                     <td class="px-7 py-4 text-center">
-                        @php
-                            $rc = $u->role === 'manager_proyek' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
-                            $rl = $u->role === 'manager_proyek' ? 'Manager Proyek' : 'Dosen Pengampu';
-                        @endphp
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $rc }}">{{ $rl }}</span>
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black {{ $aksesColor }}">
+                            {{ $aksesLabel }}
+                        </span>
                     </td>
-                    <td class="px-7 py-4 text-sm text-on-surface-variant">{{ $u->created_at->format('d M Y') }}</td>
+                    <td class="px-7 py-4 text-center">
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-700">
+                            <span class="material-symbols-outlined text-xs">check_circle</span>
+                            Aktif
+                        </span>
+                    </td>
+                    <td class="px-7 py-4 text-sm text-gray-400">{{ $u->created_at->format('d M Y') }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -151,4 +174,93 @@
     @endif
 </div>
 
+{{-- POPUP PILIH ROLE --}}
+<div id="popupApprove" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6"
+     style="background:rgba(0,0,0,0.4);">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8">
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+                 style="background:#004d4d;">
+                <span class="material-symbols-outlined text-[#7fffd4] text-2xl">manage_accounts</span>
+            </div>
+            <h3 class="text-xl font-black text-[#004d4d] uppercase tracking-tight italic">
+                Atur Akses <span class="text-[#2dce89]">Role</span>
+            </h3>
+            <p class="text-xs text-gray-400 font-bold mt-1" id="popupNama">—</p>
+        </div>
+
+        <form id="formApprove" method="POST" action="">
+            @csrf @method('PATCH')
+
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                Pilih akses yang diberikan:
+            </p>
+
+            <div class="grid grid-cols-1 gap-3 mb-6">
+                <label class="flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-[#2dce89] cursor-pointer transition-all">
+                    <input type="radio" name="akses_role" value="dosen_pengampu" class="accent-[#004d4d]">
+                    <div class="w-10 h-10 rounded-xl bg-[#2dce89] flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[#004d4d] text-xl">school</span>
+                    </div>
+                    <div>
+                        <p class="font-black text-[#004d4d] text-sm uppercase">Dosen Pengampu</p>
+                        <p class="text-[10px] text-gray-400">Verifikasi laporan & beri nilai (45%)</p>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-[#2dce89] cursor-pointer transition-all">
+                    <input type="radio" name="akses_role" value="manager_proyek" class="accent-[#004d4d]">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#004d4d;">
+                        <span class="material-symbols-outlined text-[#7fffd4] text-xl">rocket_launch</span>
+                    </div>
+                    <div>
+                        <p class="font-black text-[#004d4d] text-sm uppercase">Manager Proyek</p>
+                        <p class="text-[10px] text-gray-400">Kelola & ajukan proyek PBL (55%)</p>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-4 p-4 rounded-2xl border-2 border-[#2dce89] bg-teal-50/50 cursor-pointer transition-all">
+                    <input type="radio" name="akses_role" value="keduanya" class="accent-[#004d4d]" checked>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#004d4d] to-[#2dce89]">
+                        <span class="material-symbols-outlined text-white text-xl">swap_horiz</span>
+                    </div>
+                    <div>
+                        <p class="font-black text-[#004d4d] text-sm uppercase">Keduanya</p>
+                        <p class="text-[10px] text-gray-400">Dosen bisa switch role saat login</p>
+                    </div>
+                </label>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="tutupPopup()"
+                    class="flex-1 px-5 py-3 rounded-2xl border border-gray-200 text-xs font-black text-gray-500 hover:bg-gray-50 transition-all">
+                    Batal
+                </button>
+                <button type="submit"
+                    class="flex-1 px-5 py-3 rounded-2xl text-xs font-black text-[#004d4d] shadow-lg hover:scale-105 transition-all"
+                    style="background:#7fffd4;">
+                    <span class="material-symbols-outlined text-sm align-middle mr-1">check</span>
+                    Setujui & Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+function bukaPopup(userId, nama) {
+    document.getElementById('popupNama').textContent = nama;
+    document.getElementById('formApprove').action = '/approval-dosen/' + userId + '/approve-role';
+    document.getElementById('popupApprove').classList.remove('hidden');
+}
+function tutupPopup() {
+    document.getElementById('popupApprove').classList.add('hidden');
+}
+document.getElementById('popupApprove').addEventListener('click', function(e) {
+    if (e.target === this) tutupPopup();
+});
+</script>
+@endpush

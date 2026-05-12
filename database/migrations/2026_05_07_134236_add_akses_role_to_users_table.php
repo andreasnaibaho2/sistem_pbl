@@ -9,15 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin','manager_proyek','dosen','mahasiswa'])
-                  ->default('mahasiswa')->after('email');
+            $table->string('akses_role')->default('dosen_pengampu')->after('role_aktif');
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
+            $table->dropColumn('akses_role');
         });
     }
 };

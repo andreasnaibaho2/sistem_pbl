@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mahasiswa;
-use App\Models\PenilaianManager;
-use App\Models\PenilaianDosen;
 use App\Models\PengajuanProyek;
+use App\Models\LogbookMingguan;
+use App\Models\LaporanMkPpi;
 use Illuminate\Http\Request;
 
 class LaporanAdminController extends Controller
@@ -13,93 +13,118 @@ class LaporanAdminController extends Controller
     public function index(Request $request)
     {
         $proyekId   = $request->get('proyek_id');
-        $proyekList = PengajuanProyek::where('status', 'approved')->orderBy('judul_proyek')->get();
+        $proyekList = PengajuanProyek::where('status', 'approved')
+                        ->orderBy('judul_proyek')->get();
 
-        // Ambil semua mahasiswa dengan relasi penilaian
-        $mahasiswaList = Mahasiswa::with(['user', 'penilaianManager', 'penilaianDosen'])->get();
+        // Ambil semua mahasiswa dengan relasi aktivitas
+        $mahasiswaList = Mahasiswa::with([
+            'user',
+            'proyek',
+            'logbook',         // logbook mingguan
+            'logbookHarian',
+            'laporan',         // laporan mk/ppi
+        ])->get();
 
-        $mahasiswaRekap = $mahasiswaList->map(function ($m) use ($proyekId) {
-            $pm = $proyekId
-                ? $m->penilaianManager->where('pengajuan_proyek_id', $proyekId)->first()
-                : $m->penilaianManager->first();
+        // Filter per proyek jika dipilih
+        if ($proyekId) {
+            $mahasiswaList = $mahasiswaList->filter(function ($m) use ($proyekId) {
+                return $m->proyek->contains('id', (int)$proyekId);
+            })->values();
+        }
 
-            $pd = $m->penilaianDosen->first();
+        $mahasiswaProgress = $mahasiswaList->map(function ($m) {
+            $proyekAktif      = $m->proyek->where('status', 'approved')->first();
+            $totalLogbook     = $m->logbook->count();
+            $terverifikasi    = $m->logbook->where('status', 'disetujui')->count();
+            $totalHarian      = $m->logbookHarian->count();
+            $totalLaporan     = $m->laporan->count();
+            $laporanVerified  = $m->laporan->where('status_verifikasi', 'disetujui')->count();
 
-            $nilaiManager = $pm?->nilai_manager ?? null;
-            $nilaiDosen   = $pd?->nilai_dosen   ?? null;
+            // Progress logbook dalam persen
+            $progressLogbook  = $totalLogbook > 0
+                ? round($terverifikasi / $totalLogbook * 100)
+                : 0;
 
-            // Skip mahasiswa tanpa penilaian apapun
-            if ($nilaiManager === null && $nilaiDosen === null) {
-                return null;
-            }
-
-            $nilaiAkhir = round(($nilaiManager ?? 0) + ($nilaiDosen ?? 0), 1);
-
-            $grade = match(true) {
-                $nilaiAkhir >= 85 => 'A',
-                $nilaiAkhir >= 75 => 'B',
-                $nilaiAkhir >= 65 => 'C',
-                $nilaiAkhir >= 55 => 'D',
-                default           => 'E',
-            };
+            // Status keseluruhan
+$status = 'Belum Mulai';
+if ($totalLogbook > 0 || $totalLaporan > 0) {
+    $allLaporanDone = $totalLaporan > 0 && $laporanVerified === $totalLaporan;
+    if ($progressLogbook === 100 && $allLaporanDone) {
+        $status = 'Selesai';
+    } else {
+        $status = 'Berjalan';
+    }
+}
 
             return (object)[
-                'nama'          => $m->nama,
-                'nim'           => $m->nim,
-                'prodi'         => $m->user?->prodi ?? '-',
-                'nilai_manager' => $nilaiManager !== null ? round($nilaiManager, 1) : null,
-                'nilai_dosen'   => $nilaiDosen   !== null ? round($nilaiDosen, 1)   : null,
-                'nilai_akhir'   => $nilaiAkhir,
-                'grade'         => $grade,
+                'id'               => $m->id,
+                'nama'             => $m->nama,
+                'nim'              => $m->nim,
+                'prodi'            => $m->user?->prodi ?? '-',
+                'proyek'           => $proyekAktif?->judul_proyek ?? '-',
+                'total_logbook'    => $totalLogbook,
+                'logbook_verified' => $terverifikasi,
+                'progress_logbook' => $progressLogbook,
+                'total_harian'     => $totalHarian,
+                'total_laporan'    => $totalLaporan,
+                'laporan_verified' => $laporanVerified,
+                'status'           => $status,
             ];
-        })->filter()->values();
+        })->values();
 
-        $totalMahasiswa = Mahasiswa::count();
-        $sudahDinilai   = $mahasiswaRekap->filter(fn($r) => $r->nilai_akhir !== null)->count();
-        $belumDinilai   = $totalMahasiswa - $sudahDinilai;
+        $totalMahasiswa = $mahasiswaList->count();
+        $sudahSelesai   = $mahasiswaProgress->where('status', 'Selesai')->count();
+        $sedangBerjalan = $mahasiswaProgress->where('status', 'Berjalan')->count();
+        $belumMulai     = $mahasiswaProgress->where('status', 'Belum Mulai')->count();
 
         if ($request->get('export')) {
-            return $this->exportCsv($mahasiswaRekap);
+            return $this->exportCsv($mahasiswaProgress);
         }
 
         return view('laporan.admin', compact(
-            'mahasiswaRekap',
+            'mahasiswaProgress',
             'proyekList',
             'proyekId',
             'totalMahasiswa',
-            'sudahDinilai',
-            'belumDinilai'
+            'sudahSelesai',
+            'sedangBerjalan',
+            'belumMulai'
         ));
     }
 
-    private function exportCsv($mahasiswaRekap)
+    private function exportCsv($mahasiswaProgress)
     {
-        $filename = 'rekap-nilai-pbl-' . date('Ymd-His') . '.csv';
+        $filename = 'monitoring-aktivitas-' . date('Ymd-His') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function () use ($mahasiswaRekap) {
+        $callback = function () use ($mahasiswaProgress) {
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, [
-                'No', 'NIM', 'Nama Mahasiswa', 'Program Studi',
-                'Nilai Manager (55%)', 'Nilai Dosen (45%)', 'Nilai Akhir', 'Grade'
+                'No', 'NIM', 'Nama Mahasiswa', 'Program Studi', 'Proyek',
+                'Total Logbook', 'Logbook Verified', 'Progress (%)',
+                'Total Harian', 'Total Laporan', 'Laporan Verified', 'Status'
             ]);
 
-            foreach ($mahasiswaRekap as $i => $r) {
+            foreach ($mahasiswaProgress as $i => $r) {
                 fputcsv($file, [
                     $i + 1,
                     $r->nim,
                     $r->nama,
                     $r->prodi,
-                    $r->nilai_manager ?? '0',
-                    $r->nilai_dosen   ?? '0',
-                    $r->nilai_akhir   ?? '0',
-                    $r->grade         ?? '-',
+                    $r->proyek,
+                    $r->total_logbook,
+                    $r->logbook_verified,
+                    $r->progress_logbook . '%',
+                    $r->total_harian,
+                    $r->total_laporan,
+                    $r->laporan_verified,
+                    $r->status,
                 ]);
             }
 

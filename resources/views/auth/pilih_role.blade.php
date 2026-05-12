@@ -9,6 +9,12 @@
 </head>
 <body class="min-h-screen bg-[#f0faf8] flex items-center justify-center p-6">
 
+    @php
+        $aksesRole = auth()->user()->akses_role ?? 'keduanya';
+        $bisaManager = in_array($aksesRole, ['manager_proyek', 'keduanya']);
+        $bisaDosen   = in_array($aksesRole, ['dosen_pengampu', 'keduanya']);
+    @endphp
+
     <div class="w-full max-w-lg">
 
         {{-- Logo & Title --}}
@@ -23,10 +29,17 @@
         </div>
 
         {{-- Pilihan Role --}}
+        @if($bisaManager && $bisaDosen)
+        {{-- Keduanya: tampilkan 2 kartu --}}
         <div class="grid grid-cols-2 gap-4 mb-6">
+        @else
+        {{-- Hanya 1 akses: tampilkan 1 kartu tengah --}}
+        <div class="flex justify-center mb-6">
+        @endif
 
             {{-- Manager Proyek --}}
-            <form action="{{ route('pilih.role.simpan') }}" method="POST">
+            @if($bisaManager)
+            <form action="{{ route('pilih.role.simpan') }}" method="POST" class="{{ !$bisaDosen ? 'w-64' : '' }}">
                 @csrf
                 <input type="hidden" name="role_aktif" value="manager_proyek">
                 <button type="submit"
@@ -43,9 +56,11 @@
                     </div>
                 </button>
             </form>
+            @endif
 
             {{-- Dosen Pengampu --}}
-            <form action="{{ route('pilih.role.simpan') }}" method="POST">
+            @if($bisaDosen)
+            <form action="{{ route('pilih.role.simpan') }}" method="POST" class="{{ !$bisaManager ? 'w-64' : '' }}">
                 @csrf
                 <input type="hidden" name="role_aktif" value="dosen_pengampu">
                 <button type="submit"
@@ -62,6 +77,7 @@
                     </div>
                 </button>
             </form>
+            @endif
 
         </div>
 
