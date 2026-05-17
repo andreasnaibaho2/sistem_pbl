@@ -356,10 +356,23 @@ foreach ($semuaAspek as $fieldName => $aspek) {
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-1">Estimasi Nilai Dosen (45%)</p>
-                    <p class="text-4xl font-black" style="color:#0d9488;" id="grandTotal">0.00</p>
-                    <p class="text-[10px] mt-2" id="infoAspekBelum" style="color:#9ca3af;">
-                        Semua aspek harus dipilih sebelum menyimpan.
-                    </p>
+<div class="flex items-end gap-3">
+    <p class="text-4xl font-black" style="color:#0d9488;" id="grandTotal">0.00</p>
+    <div class="mb-1">
+        <span class="text-[10px] text-gray-400 font-bold block">dari maks. 45</span>
+        <span class="text-sm font-black text-gray-500">≈ <span id="grandTotalPer100">0.00</span> / 100</span>
+    </div>
+</div>
+<div class="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+    <span class="material-symbols-outlined text-amber-500 text-sm shrink-0 mt-0.5">info</span>
+    <p class="text-[10px] text-amber-700 leading-relaxed">
+        Nilai ini adalah <strong>kontribusi 45%</strong> dari nilai akhir mahasiswa.
+        Nilai Akhir = Nilai Manager Proyek + Nilai Dosen (total maks. 100).
+    </p>
+</div>
+<p class="text-[10px] mt-2" id="infoAspekBelum" style="color:#9ca3af;">
+    Semua aspek harus dipilih sebelum menyimpan.
+</p>
                 </div>
                 <button type="submit"
                     class="flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-black text-white shadow-xl transition-all hover:scale-105"
@@ -464,6 +477,9 @@ function updateGrandTotal() {
             total += nilaiTerpilih[field] * (bobotMap[field] / 100);
     });
     document.getElementById('grandTotal').textContent = total.toFixed(2);
+    var per100 = total > 0 ? (total / 45 * 100).toFixed(2) : '0.00';
+    var el100  = document.getElementById('grandTotalPer100');
+    if (el100) el100.textContent = per100;
 
     var belum = semuaField.filter(function(f) { return nilaiTerpilih[f] === undefined; });
     var info  = document.getElementById('infoAspekBelum');

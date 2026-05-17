@@ -178,14 +178,28 @@
                 </div>
 
                 {{-- Tombol Lihat PDF --}}
-                @if($rekap->pdf_path)
-                <a href="{{ route('logbook_mingguan.show', $rekap->id) }}"
-                    target="_blank"
-                    class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-3 py-1.5 rounded-lg transition">
-                    <span class="material-symbols-outlined text-sm">open_in_new</span>
-                    Lihat PDF
-                </a>
-                @endif
+@if($rekap->pdf_path)
+<a href="{{ route('logbook_mingguan.show', $rekap->id) }}"
+    target="_blank"
+    class="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-blue-600 border border-gray-200 hover:border-blue-300 px-3 py-1.5 rounded-lg transition">
+    <span class="material-symbols-outlined text-sm">open_in_new</span>
+    Lihat PDF
+</a>
+@endif
+
+{{-- Tombol Batalkan — hanya untuk status diajukan/draft --}}
+@if(in_array($rekap->status, ['diajukan', 'draft']) && auth()->user()->isMahasiswa())
+<form method="POST" action="{{ route('logbook_mingguan.batal', $rekap->id) }}"
+    onsubmit="return confirm('Batalkan rekap minggu ke-{{ $rekap->minggu_ke }}? File PDF akan dihapus dan kamu bisa generate ulang.')">
+    @csrf
+    @method('DELETE')
+    <button type="submit"
+        class="shrink-0 flex items-center gap-1 text-xs font-medium text-red-500 hover:text-white hover:bg-red-500 border border-red-200 hover:border-red-500 px-3 py-1.5 rounded-lg transition">
+        <span class="material-symbols-outlined text-sm">undo</span>
+        Batalkan
+    </button>
+</form>
+@endif
             </div>
             @endforeach
         </div>

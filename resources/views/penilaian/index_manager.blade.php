@@ -32,6 +32,9 @@
                     <td class="px-5 py-3 text-gray-600">{{ $p->pengajuanProyek->judul_proyek ?? '-' }}</td>
                     <td class="px-5 py-3 text-center">
                         <span class="font-bold text-emerald-700 text-base">{{ number_format($p->nilai_manager, 1) }}</span>
+<span class="block text-[10px] text-gray-400 font-medium">
+    / 55 &nbsp;(≈ {{ number_format($p->nilai_manager / 55 * 100, 1) }}/100)
+</span>
                     </td>
                     <td class="px-5 py-3 text-center">
                         <span class="bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-1 rounded-full">Selesai</span>

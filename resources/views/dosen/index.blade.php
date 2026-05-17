@@ -12,10 +12,17 @@
             {{ $dosens->count() }} dosen terdaftar
         </p>
     </div>
-    <a href="{{ route('dosen.create') }}"
-       class="flex items-center gap-2 px-5 py-3 bg-primary text-on-primary rounded-2xl text-xs font-black hover:opacity-90 hover:scale-105 transition-all shadow-lg">
-        <span class="material-symbols-outlined text-base">person_add</span> Tambah Dosen
-    </a>
+    <div class="flex items-center gap-3">
+        <a href="{{ route('dosen.batch.create') }}"
+           class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black hover:scale-105 transition-all shadow-lg text-[#004d4d]"
+           style="background:#7fffd4;">
+            <span class="material-symbols-outlined text-base">table_rows</span> Input Massal
+        </a>
+        <a href="{{ route('dosen.create') }}"
+           class="flex items-center gap-2 px-5 py-3 bg-primary text-on-primary rounded-2xl text-xs font-black hover:opacity-90 hover:scale-105 transition-all shadow-lg">
+            <span class="material-symbols-outlined text-base">person_add</span> Tambah Dosen
+        </a>
+    </div>
 </div>
 
 {{-- STAT CARDS --}}

@@ -103,13 +103,32 @@
 
 {{-- SUDAH DISETUJUI --}}
 <div>
-    <div class="flex items-center gap-3 mb-5">
-        <h2 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
-            Sudah <span class="text-[#2dce89]">Disetujui</span>
-        </h2>
-        <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">
-            {{ $approvedDosen->count() }}
-        </span>
+    {{-- Heading + Filter Bar --}}
+    <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+            <h2 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
+                Sudah <span class="text-[#2dce89]">Disetujui</span>
+            </h2>
+            <span id="approvedCount" class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">
+                {{ $approvedDosen->count() }}
+            </span>
+        </div>
+
+        {{-- FILTER BAR --}}
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none">search</span>
+                <input type="text" id="searchApproved" placeholder="Cari nama / NIDN..."
+                    class="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2dce89]/40 w-52 transition-all">
+            </div>
+            <select id="filterAksesRole"
+                class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2dce89]/40 transition-all">
+                <option value="">Semua Role</option>
+                <option value="dosen_pengampu">Dosen Pengampu</option>
+                <option value="manager_proyek">Manager Proyek</option>
+                <option value="keduanya">Keduanya</option>
+            </select>
+        </div>
     </div>
 
     @if($approvedDosen->isEmpty())
@@ -132,18 +151,23 @@
             <tbody class="divide-y divide-gray-50">
                 @foreach($approvedDosen as $u)
                 @php
-                    $aksesLabel = match($u->akses_role ?? 'keduanya') {
+                    $akses = $u->akses_role ?? 'keduanya';
+                    $aksesLabel = match($akses) {
                         'manager_proyek' => 'Manager Proyek',
                         'dosen_pengampu' => 'Dosen Pengampu',
                         default          => 'Keduanya',
                     };
-                    $aksesColor = match($u->akses_role ?? 'keduanya') {
+                    $aksesColor = match($akses) {
                         'manager_proyek' => 'bg-blue-100 text-blue-700',
                         'dosen_pengampu' => 'bg-purple-100 text-purple-700',
                         default          => 'bg-teal-100 text-teal-700',
                     };
                 @endphp
-                <tr class="hover:bg-gray-50/50 transition-colors">
+                {{-- data-nama & data-nidn lowercase untuk matching JS --}}
+                <tr class="hover:bg-gray-50/50 transition-colors approved-row"
+                    data-nama="{{ strtolower($u->name) }}"
+                    data-nidn="{{ strtolower($u->dosen?->nidn ?? '') }}"
+                    data-akses="{{ $akses }}">
                     <td class="px-7 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center font-black text-xs text-[#004d4d] shrink-0">
@@ -170,6 +194,12 @@
                 @endforeach
             </tbody>
         </table>
+
+        {{-- Empty state saat filter tidak cocok --}}
+        <div id="noResultApproved" class="hidden px-10 py-16 text-center">
+            <span class="material-symbols-outlined text-4xl text-gray-300 block mb-3">search_off</span>
+            <p class="text-gray-400 font-black italic text-sm uppercase">Tidak ada hasil yang cocok.</p>
+        </div>
     </div>
     @endif
 </div>
@@ -191,11 +221,9 @@
 
         <form id="formApprove" method="POST" action="">
             @csrf @method('PATCH')
-
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
                 Pilih akses yang diberikan:
             </p>
-
             <div class="grid grid-cols-1 gap-3 mb-6">
                 <label class="flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-[#2dce89] cursor-pointer transition-all">
                     <input type="radio" name="akses_role" value="dosen_pengampu" class="accent-[#004d4d]">
@@ -207,7 +235,6 @@
                         <p class="text-[10px] text-gray-400">Verifikasi laporan & beri nilai (45%)</p>
                     </div>
                 </label>
-
                 <label class="flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-[#2dce89] cursor-pointer transition-all">
                     <input type="radio" name="akses_role" value="manager_proyek" class="accent-[#004d4d]">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:#004d4d;">
@@ -218,7 +245,6 @@
                         <p class="text-[10px] text-gray-400">Kelola & ajukan proyek PBL (55%)</p>
                     </div>
                 </label>
-
                 <label class="flex items-center gap-4 p-4 rounded-2xl border-2 border-[#2dce89] bg-teal-50/50 cursor-pointer transition-all">
                     <input type="radio" name="akses_role" value="keduanya" class="accent-[#004d4d]" checked>
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#004d4d] to-[#2dce89]">
@@ -230,7 +256,6 @@
                     </div>
                 </label>
             </div>
-
             <div class="flex gap-3">
                 <button type="button" onclick="tutupPopup()"
                     class="flex-1 px-5 py-3 rounded-2xl border border-gray-200 text-xs font-black text-gray-500 hover:bg-gray-50 transition-all">
@@ -251,6 +276,7 @@
 
 @push('scripts')
 <script>
+// ── Popup ──────────────────────────────────────────────
 function bukaPopup(userId, nama) {
     document.getElementById('popupNama').textContent = nama;
     document.getElementById('formApprove').action = '/approval-dosen/' + userId + '/approve-role';
@@ -262,5 +288,44 @@ function tutupPopup() {
 document.getElementById('popupApprove').addEventListener('click', function(e) {
     if (e.target === this) tutupPopup();
 });
+
+// ── Multi-Filter "Sudah Disetujui" ────────────────────
+(function () {
+    const searchInput = document.getElementById('searchApproved');
+    const roleSelect  = document.getElementById('filterAksesRole');
+    const rows        = document.querySelectorAll('.approved-row');
+    const noResult    = document.getElementById('noResultApproved');
+    const countBadge  = document.getElementById('approvedCount');
+
+    if (!searchInput || !roleSelect) return; // guard: tabel kosong
+
+    function applyFilter() {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const role    = roleSelect.value;
+        let visible   = 0;
+
+        rows.forEach(row => {
+            const nama  = row.dataset.nama  || '';
+            const nidn  = row.dataset.nidn  || '';
+            const akses = row.dataset.akses || '';
+
+            const matchSearch = !keyword || nama.includes(keyword) || nidn.includes(keyword);
+            const matchRole   = !role    || akses === role;
+
+            if (matchSearch && matchRole) {
+                row.classList.remove('hidden');
+                visible++;
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        noResult.classList.toggle('hidden', visible > 0);
+        countBadge.textContent = visible;
+    }
+
+    searchInput.addEventListener('input', applyFilter);
+    roleSelect.addEventListener('change', applyFilter);
+})();
 </script>
 @endpush

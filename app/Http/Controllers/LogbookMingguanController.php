@@ -13,43 +13,66 @@ class LogbookMingguanController extends Controller
 {
     // Daftar rekap mingguan milik mahasiswa
     public function index()
-    {
-        $mahasiswa = Auth::user()->mahasiswa;
+{
+    $user = Auth::user();
 
-        $rekapList = LogbookMingguan::with('proyek')
-            ->where('mahasiswa_id', $mahasiswa->id)
-            ->orderBy('pengajuan_proyek_id')
-            ->orderBy('minggu_ke')
+    // ── Admin: lihat semua logbook mingguan ──
+    if ($user->isAdmin()) {
+        $rekapList = LogbookMingguan::with(['mahasiswa.user', 'proyek'])
+            ->orderBy('created_at', 'desc')
             ->get();
-
-        $proyekAktif = PengajuanProyek::whereHas('mahasiswa', function ($q) use ($mahasiswa) {
-            $q->where('mahasiswa_id', $mahasiswa->id);
-        })->get();
-
         $mingguBelumRekap = [];
-        foreach ($proyekAktif as $proyek) {
-            $mingguAda = LogbookHarian::where('mahasiswa_id', $mahasiswa->id)
-                ->where('pengajuan_proyek_id', $proyek->id)
-                ->distinct()
-                ->pluck('minggu_ke');
-
-            foreach ($mingguAda as $minggu) {
-                $sudahAda = LogbookMingguan::where('mahasiswa_id', $mahasiswa->id)
-                    ->where('pengajuan_proyek_id', $proyek->id)
-                    ->where('minggu_ke', $minggu)
-                    ->exists();
-
-                if (!$sudahAda) {
-                    $mingguBelumRekap[] = [
-                        'proyek'    => $proyek,
-                        'minggu_ke' => $minggu,
-                    ];
-                }
-            }
-        }
-
         return view('logbook_mingguan.index', compact('rekapList', 'mingguBelumRekap'));
     }
+
+    // ── Manager / Dosen: lihat logbook dari proyek yang dikelola ──
+    if (in_array($user->role_aktif ?? $user->role, ['manager_proyek', 'dosen'])) {
+        $proyekIds = PengajuanProyek::where('manager_id', $user->id)->pluck('id');
+        $rekapList = LogbookMingguan::with(['mahasiswa.user', 'proyek'])
+            ->whereIn('pengajuan_proyek_id', $proyekIds)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $mingguBelumRekap = [];
+        return view('logbook_mingguan.index', compact('rekapList', 'mingguBelumRekap'));
+    }
+
+    // ── Mahasiswa: logbook milik sendiri ──
+    $mahasiswa = $user->mahasiswa;
+
+    $rekapList = LogbookMingguan::with('proyek')
+        ->where('mahasiswa_id', $mahasiswa->id)
+        ->orderBy('pengajuan_proyek_id')
+        ->orderBy('minggu_ke')
+        ->get();
+
+    $proyekAktif = PengajuanProyek::whereHas('mahasiswa', function ($q) use ($mahasiswa) {
+        $q->where('mahasiswa_id', $mahasiswa->id);
+    })->get();
+
+    $mingguBelumRekap = [];
+    foreach ($proyekAktif as $proyek) {
+        $mingguAda = LogbookHarian::where('mahasiswa_id', $mahasiswa->id)
+            ->where('pengajuan_proyek_id', $proyek->id)
+            ->distinct()
+            ->pluck('minggu_ke');
+
+        foreach ($mingguAda as $minggu) {
+            $sudahAda = LogbookMingguan::where('mahasiswa_id', $mahasiswa->id)
+                ->where('pengajuan_proyek_id', $proyek->id)
+                ->where('minggu_ke', $minggu)
+                ->exists();
+
+            if (!$sudahAda) {
+                $mingguBelumRekap[] = [
+                    'proyek'    => $proyek,
+                    'minggu_ke' => $minggu,
+                ];
+            }
+        }
+    }
+
+    return view('logbook_mingguan.index', compact('rekapList', 'mingguBelumRekap'));
+}
 
     // Generate PDF rekap mingguan
     public function generate(Request $request)
@@ -100,6 +123,32 @@ class LogbookMingguanController extends Controller
 
         return back()->with('success', 'Rekap minggu ke-' . $request->minggu_ke . ' berhasil digenerate & diajukan.');
     }
+
+    // Batalkan rekap mingguan (hanya status diajukan, oleh pemilik)
+public function batal(LogbookMingguan $logbookMingguan)
+{
+    $mahasiswa = Auth::user()->mahasiswa;
+
+    // Pastikan hanya pemilik yang bisa batalkan
+    if ($logbookMingguan->mahasiswa_id !== $mahasiswa->id) {
+        abort(403);
+    }
+
+    // Hanya boleh batalkan jika masih diajukan/menunggu
+    if (!in_array($logbookMingguan->status, ['diajukan', 'draft'])) {
+        return back()->with('error', 'Rekap yang sudah diverifikasi tidak dapat dibatalkan.');
+    }
+
+    // Hapus file PDF dari storage
+    if ($logbookMingguan->pdf_path && Storage::disk('public')->exists($logbookMingguan->pdf_path)) {
+        Storage::disk('public')->delete($logbookMingguan->pdf_path);
+    }
+
+    $minggu = $logbookMingguan->minggu_ke;
+    $logbookMingguan->delete();
+
+    return back()->with('success', 'Rekap minggu ke-' . $minggu . ' berhasil dibatalkan. Kamu bisa generate ulang.');
+}
 
     // Lihat PDF
     public function show(LogbookMingguan $logbookMingguan)

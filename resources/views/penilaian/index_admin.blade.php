@@ -55,6 +55,49 @@
     </div>
 </div>
 
+{{-- FILTER BAR --}}
+<div class="bg-white rounded-[2rem] border border-outline-variant/20 shadow-sm px-7 py-5 mb-5">
+    <div class="flex flex-wrap items-center gap-3">
+
+        {{-- Search nama / NIM --}}
+        <div class="relative w-64">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+            <input type="text" id="searchNilai" oninput="applyFilter()" placeholder="Cari nama atau NIM..."
+                class="w-full pl-9 pr-4 py-2.5 bg-surface-container-low rounded-xl border border-outline-variant/20 text-xs font-medium text-on-surface focus:outline-none focus:border-primary">
+        </div>
+
+        {{-- Divider --}}
+        <div class="h-6 w-px bg-outline-variant/20"></div>
+
+        {{-- Filter Status Nilai --}}
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black text-outline uppercase tracking-widest">Status:</span>
+            @foreach(['semua'=>'Semua','lengkap'=>'Nilai Lengkap','sebagian'=>'Sebagian','belum'=>'Belum Dinilai'] as $val=>$lbl)
+            <button onclick="setFilter('status','{{ $val }}')"
+                data-filter="status" data-value="{{ $val }}"
+                class="filter-btn px-3 py-2 rounded-xl text-[10px] font-black border transition-all
+                {{ $val==='semua' ? 'bg-primary text-on-primary border-primary' : 'bg-surface-container text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary' }}">
+                {{ $lbl }}
+                @if($val === 'belum' && $belumLengkap > 0)
+                    <span class="ml-1 px-1.5 py-0.5 rounded-full bg-red-400 text-white text-[9px] font-black">{{ $belumLengkap }}</span>
+                @endif
+            </button>
+            @endforeach
+        </div>
+
+        {{-- Reset & Counter --}}
+        <div class="ml-auto flex items-center gap-3">
+            <span id="filterCounter" class="hidden text-[10px] font-black text-outline">
+                <span id="visibleCount">0</span> mahasiswa ditemukan
+            </span>
+            <button onclick="resetFilter()" id="btnReset"
+                class="hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black border border-outline-variant/20 text-outline hover:text-red-500 hover:border-red-200 transition-all">
+                <span class="material-symbols-outlined text-sm">filter_alt_off</span> Reset
+            </button>
+        </div>
+    </div>
+</div>
+
 {{-- TABEL REKAP --}}
 <div class="bg-white rounded-[2rem] shadow-sm border border-outline-variant/20 overflow-hidden">
     <table class="w-full text-left">
@@ -70,7 +113,7 @@
                 <th class="px-7 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">Detail</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-outline-variant/10">
+        <tbody class="divide-y divide-outline-variant/10" id="nilaiTbody">
             @forelse($mahasiswaList as $i => $mhs)
             @php
                 $pm         = $mhs->penilaianManager->first();
@@ -87,9 +130,17 @@
                 }
                 $proyek = $pm->pengajuanProyek->judul_proyek ?? null;
                 $matkul = $pd->supervisiMatkul->mataKuliah->nama_matkul ?? null;
+
+                // status filter: lengkap = keduanya ada, sebagian = salah satu, belum = keduanya null
+                $statusNilai = ($nilaiM !== null && $nilaiD !== null) ? 'lengkap'
+                             : (($nilaiM !== null || $nilaiD !== null) ? 'sebagian' : 'belum');
             @endphp
-            <tr class="hover:bg-surface-container-lowest transition-colors">
-                <td class="px-7 py-5 text-[10px] font-black text-outline/40">{{ $i + 1 }}</td>
+            <tr class="nilai-row hover:bg-surface-container-lowest transition-colors"
+                data-name="{{ strtolower($mhs->nama) }}"
+                data-nim="{{ $mhs->nim }}"
+                data-status="{{ $statusNilai }}">
+
+                <td class="px-7 py-5 text-[10px] font-black text-outline/40 row-num">{{ $i + 1 }}</td>
 
                 {{-- Mahasiswa --}}
                 <td class="px-7 py-5">
@@ -189,6 +240,15 @@
             @endforelse
         </tbody>
     </table>
+
+    {{-- Empty filter state --}}
+    <div id="emptyFilter" class="hidden px-7 py-16 text-center">
+        <span class="material-symbols-outlined text-5xl text-outline-variant/40 block mb-3">search_off</span>
+        <p class="font-black italic text-on-surface-variant/40 text-sm">Tidak ada mahasiswa ditemukan.</p>
+        <button onclick="resetFilter()" class="mt-4 text-[10px] font-black text-primary hover:underline uppercase tracking-widest">
+            Reset Filter
+        </button>
+    </div>
 </div>
 
 {{-- MODAL DETAIL --}}
@@ -209,7 +269,7 @@
     </div>
 </div>
 
-{{-- DATA JSON --}}
+{{-- DATA JSON + SCRIPT --}}
 <script>
 const dataPenilaian = {
     @foreach($mahasiswaList as $mhs)
@@ -240,6 +300,54 @@ const dataPenilaian = {
     @endforeach
 };
 
+// ===================== FILTER =====================
+const activeFilters = { status: 'semua' };
+
+function setFilter(type, value) {
+    activeFilters[type] = value;
+    document.querySelectorAll(`[data-filter="${type}"]`).forEach(btn => {
+        const isActive = btn.dataset.value === value;
+        btn.className = 'filter-btn px-3 py-2 rounded-xl text-[10px] font-black border transition-all ' +
+            (isActive
+                ? 'bg-primary text-on-primary border-primary'
+                : 'bg-surface-container text-on-surface-variant border-outline-variant/20 hover:border-primary hover:text-primary');
+    });
+    applyFilter();
+}
+
+function applyFilter() {
+    const q      = document.getElementById('searchNilai').value.toLowerCase().trim();
+    const rows   = document.querySelectorAll('.nilai-row');
+    let visible  = 0;
+
+    rows.forEach(r => {
+        const matchSearch = !q || r.dataset.name.includes(q) || r.dataset.nim.includes(q);
+        const matchStatus = activeFilters.status === 'semua' || r.dataset.status === activeFilters.status;
+        const show = matchSearch && matchStatus;
+        r.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+
+    // Nomor urut ulang
+    let num = 1;
+    rows.forEach(r => {
+        if (r.style.display !== 'none') r.querySelector('.row-num').textContent = num++;
+    });
+
+    document.getElementById('emptyFilter').classList.toggle('hidden', visible > 0);
+
+    const isFiltered = q || activeFilters.status !== 'semua';
+    document.getElementById('btnReset').classList.toggle('hidden', !isFiltered);
+    document.getElementById('filterCounter').classList.toggle('hidden', !isFiltered);
+    document.getElementById('visibleCount').textContent = visible;
+}
+
+function resetFilter() {
+    document.getElementById('searchNilai').value = '';
+    setFilter('status', 'semua');
+}
+
+// ===================== MODAL =====================
 function bukaDetail(id) {
     const d = dataPenilaian[id];
     if (!d) return;
@@ -248,7 +356,6 @@ function bukaDetail(id) {
 
     let html = '';
 
-    // === MANAGER ===
     html += `<div class="mb-5 p-5 rounded-2xl border border-outline-variant/20">
         <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined text-base" style="color:#004d4d;">manage_accounts</span>
@@ -274,7 +381,6 @@ function bukaDetail(id) {
     }
     html += `</div>`;
 
-    // === DOSEN ===
     html += `<div class="p-5 rounded-2xl border border-outline-variant/20">
         <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined text-base" style="color:#2dce89;">school</span>

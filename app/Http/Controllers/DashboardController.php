@@ -136,11 +136,11 @@ class DashboardController extends Controller
     $totalProyek = 0;
 
     return view('dosen.dashboard', compact(
-        'proyekList', 'stats',
-        'totalProyek', 'totalMahasiswa',
-        'laporanMenunggu', 'penilaianSelesai',
-        'laporanTerbaru'
-    ));
+    'proyekList', 'stats',
+    'totalProyek', 'totalMahasiswa',
+    'laporanMenunggu', 'penilaianSelesai',
+    'laporanTerbaru', 'supervisiList'  // ← tambah supervisiList
+));
 }
 
     private function mahasiswaDashboard()

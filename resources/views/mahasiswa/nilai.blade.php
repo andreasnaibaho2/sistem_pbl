@@ -16,11 +16,15 @@
 </div>
 @else
 
-{{-- Hitung nilai akhir gabungan --}}
 @php
     $nm = $nilaiManager->nilai_manager ?? 0;
     $nd = $nilaiDosen->sum('nilai_dosen');
     $nilaiAkhir = $nm + $nd;
+
+    // Konversi ke skala 100
+    $nmPer100 = $nm > 0 ? round($nm / 55 * 100, 1) : 0;
+    $ndPer100 = $nd > 0 ? round($nd / 45 * 100, 1) : 0;
+
     $grade = $nilaiAkhir >= 85 ? 'A' : ($nilaiAkhir >= 75 ? 'B' : ($nilaiAkhir >= 65 ? 'C' : ($nilaiAkhir >= 55 ? 'D' : 'E')));
 @endphp
 
@@ -40,7 +44,7 @@
 </div>
 
 {{-- Progress Bar --}}
-<div class="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm p-6 mb-6">
+<div class="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm p-6 mb-4">
     <div class="flex justify-between items-center mb-3">
         <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Progress Nilai</span>
         <span class="text-sm font-black text-[#004d4d]">{{ number_format($nilaiAkhir, 1) }} / 100</span>
@@ -49,8 +53,27 @@
         <div class="h-3 rounded-full bg-[#004d4d] transition-all" style="width: {{ min($nilaiAkhir, 100) }}%"></div>
     </div>
     <div class="flex justify-between text-xs text-slate-400 font-medium">
-        <span>Manager Proyek (55%): <strong class="text-[#004d4d]">{{ number_format($nm, 1) }}</strong></span>
-        <span>Dosen Pengampu (45%): <strong class="text-[#004d4d]">{{ number_format($nd, 1) }}</strong></span>
+        <span>
+            Manager Proyek (55%):
+            <strong class="text-[#004d4d]">{{ number_format($nm, 1) }}</strong>
+            <span class="text-gray-300 ml-1">= {{ number_format($nmPer100, 1) }}/100</span>
+        </span>
+        <span>
+            Dosen Pengampu (45%):
+            <strong class="text-[#004d4d]">{{ number_format($nd, 1) }}</strong>
+            <span class="text-gray-300 ml-1">= {{ number_format($ndPer100, 1) }}/100</span>
+        </span>
+    </div>
+</div>
+
+{{-- Info Box Penjelasan Bobot --}}
+<div class="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-6 flex items-start gap-3">
+    <span class="material-symbols-outlined text-amber-500 text-lg shrink-0 mt-0.5">info</span>
+    <div class="text-xs text-amber-700 leading-relaxed">
+        <span class="font-black block mb-1">Cara Membaca Nilai</span>
+        Nilai Manager dan Dosen ditampilkan dalam <strong>skala bobot</strong> (Manager maks. 55, Dosen maks. 45)
+        sekaligus <strong>skala 100</strong> untuk kemudahan perbandingan.
+        Nilai Akhir = Nilai Manager + Nilai Dosen (total maks. 100).
     </div>
 </div>
 
@@ -65,9 +88,14 @@
                 </div>
                 <h3 class="font-black text-[#004d4d] text-sm uppercase tracking-widest">Manager Proyek</h3>
             </div>
-            <span class="text-[10px] font-black px-3 py-1.5 rounded-full bg-teal-50 text-[#004d4d] uppercase tracking-widest">
-                {{ number_format($nm, 1) }} / 55
-            </span>
+            <div class="text-right">
+                <span class="text-[10px] font-black px-3 py-1.5 rounded-full bg-teal-50 text-[#004d4d] uppercase tracking-widest block">
+                    {{ number_format($nm, 1) }} / 55
+                </span>
+                <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
+                    ≈ {{ number_format($nmPer100, 1) }} / 100
+                </span>
+            </div>
         </div>
         <div class="p-6 space-y-5">
             @if($nilaiManager)
@@ -132,17 +160,38 @@
                 </div>
                 <h3 class="font-black text-[#004d4d] text-sm uppercase tracking-widest">Dosen Pengampu</h3>
             </div>
-            <span class="text-[10px] font-black px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 uppercase tracking-widest">
-                {{ number_format($nd, 1) }} / 45
-            </span>
+            <div class="text-right">
+                <span class="text-[10px] font-black px-3 py-1.5 rounded-full bg-purple-50 text-purple-600 uppercase tracking-widest block">
+                    {{ number_format($nd, 1) }} / 45
+                </span>
+                <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
+                    ≈ {{ number_format($ndPer100, 1) }} / 100
+                </span>
+            </div>
         </div>
         <div class="p-6 space-y-5">
             @forelse($nilaiDosen as $pd)
+            @php
+                $ndSingle     = $pd->nilai_dosen ?? 0;
+                $ndSinglePer100 = $ndSingle > 0 ? round($ndSingle / 45 * 100, 1) : 0;
+            @endphp
             <div class="mb-4 pb-4 border-b border-gray-100 last:border-b-0">
-                <p class="text-xs font-black text-[#004d4d] uppercase tracking-widest mb-3">
-                    {{ $pd->supervisiMatkul->mataKuliah->nama_matkul ?? '-' }}
-                    <span class="text-gray-400 font-normal normal-case tracking-normal">— Sem {{ $pd->supervisiMatkul->semester ?? '' }}</span>
-                </p>
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-black text-[#004d4d] uppercase tracking-widest">
+                        {{ $pd->supervisiMatkul->mataKuliah->nama_matkul ?? '-' }}
+                        <span class="text-gray-400 font-normal normal-case tracking-normal">
+                            — Sem {{ $pd->supervisiMatkul->semester ?? '' }}
+                        </span>
+                    </p>
+                    <div class="text-right shrink-0 ml-2">
+                        <span class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-1 rounded-lg block">
+                            {{ number_format($ndSingle, 1) }} / 45
+                        </span>
+                        <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
+                            ≈ {{ number_format($ndSinglePer100, 1) }} / 100
+                        </span>
+                    </div>
+                </div>
                 @php
                 $grupDosen = [
                     ['label'=>'Literacy Skills','bobot'=>'15%','color'=>'bg-amber-500','items'=>[

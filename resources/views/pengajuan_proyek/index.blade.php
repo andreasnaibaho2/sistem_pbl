@@ -27,7 +27,6 @@
     $cRejected = $pengajuan->where('status','rejected')->count();
 
     // Data untuk dropdown filter
-    $tahunList   = $pengajuan->map(fn($p) => $p->tanggal_mulai->format('Y'))->unique()->sortDesc()->values();
     $managerList = $pengajuan->map(fn($p) => $p->manager)->filter()->unique('id')->sortBy('name')->values();
 @endphp
 <div class="grid grid-cols-4 gap-5 mb-8">
@@ -92,22 +91,7 @@
         {{-- Divider --}}
         <div class="h-6 w-px bg-outline-variant/20"></div>
 
-        {{-- Filter Tahun --}}
-        @if($tahunList->count() > 1)
-        <div class="flex items-center gap-2">
-            <span class="text-[10px] font-black text-outline uppercase tracking-widest">Tahun:</span>
-            <select id="filterTahun" onchange="applyFilter()"
-                class="py-2 pl-3 pr-8 bg-surface-container-low rounded-xl border border-outline-variant/20 text-xs font-black text-on-surface focus:outline-none focus:border-primary appearance-none cursor-pointer">
-                <option value="semua">Semua</option>
-                @foreach($tahunList as $tahun)
-                <option value="{{ $tahun }}">{{ $tahun }}</option>
-                @endforeach
-            </select>
-        </div>
 
-        {{-- Divider --}}
-        <div class="h-6 w-px bg-outline-variant/20"></div>
-        @endif
 
         {{-- Filter Manager --}}
         @if($managerList->count() > 1)
@@ -173,7 +157,6 @@
                 data-status="{{ $p->status }}"
                 data-judul="{{ strtolower($p->judul_proyek) }}"
                 data-kode="{{ strtolower($p->kode_pengajuan) }}"
-                data-tahun="{{ $p->tanggal_mulai->format('Y') }}"
                 data-manager-id="{{ $p->manager_id }}">
 
                 <td class="px-7 py-5 text-[10px] font-black text-outline/40 row-num">{{ $idx + 1 }}</td>
@@ -268,18 +251,16 @@ function setFilter(type, value) {
 
 function applyFilter() {
     const q         = document.getElementById('searchProyek').value.toLowerCase().trim();
-    const tahun     = document.getElementById('filterTahun')?.value   ?? 'semua';
     const managerId = document.getElementById('filterManager')?.value ?? 'semua';
     const rows      = document.querySelectorAll('.proyek-row');
     let visible     = 0;
 
     rows.forEach(r => {
         const matchSearch  = !q || r.dataset.judul.includes(q) || r.dataset.kode.includes(q);
-        const matchStatus  = activeFilters.status === 'semua' || r.dataset.status  === activeFilters.status;
-        const matchTahun   = tahun     === 'semua' || r.dataset.tahun              === tahun;
-        const matchManager = managerId === 'semua' || r.dataset.managerId          === managerId;
+        const matchStatus  = activeFilters.status === 'semua' || r.dataset.status    === activeFilters.status;
+        const matchManager = managerId === 'semua' || r.dataset.managerId            === managerId;
 
-        const show = matchSearch && matchStatus && matchTahun && matchManager;
+        const show = matchSearch && matchStatus && matchManager;
         r.style.display = show ? '' : 'none';
         if (show) visible++;
     });
@@ -292,7 +273,7 @@ function applyFilter() {
 
     document.getElementById('emptyFilter').classList.toggle('hidden', visible > 0);
 
-    const isFiltered = q || activeFilters.status !== 'semua' || tahun !== 'semua' || managerId !== 'semua';
+    const isFiltered = q || activeFilters.status !== 'semua' || managerId !== 'semua';
     document.getElementById('btnReset').classList.toggle('hidden', !isFiltered);
     document.getElementById('filterCounter').classList.toggle('hidden', !isFiltered);
     document.getElementById('visibleCount').textContent = visible;
@@ -300,10 +281,8 @@ function applyFilter() {
 
 function resetFilter() {
     document.getElementById('searchProyek').value = '';
-    const elTahun = document.getElementById('filterTahun');
-    const elMgr   = document.getElementById('filterManager');
-    if (elTahun) elTahun.value = 'semua';
-    if (elMgr)   elMgr.value   = 'semua';
+    const elMgr = document.getElementById('filterManager');
+    if (elMgr) elMgr.value = 'semua';
     setFilter('status', 'semua');
 }
 </script>

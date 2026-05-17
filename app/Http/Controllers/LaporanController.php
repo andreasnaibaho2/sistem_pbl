@@ -11,40 +11,57 @@ use Illuminate\Support\Facades\Storage;
 class LaporanController extends Controller
 {
     public function index()
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
+    $laporan = collect(); // default kosong
 
-        if ($user->isMahasiswa()) {
-            $mhsId = $user->mahasiswa->id;
+    if ($user->isMahasiswa()) {
+        $mhsId = $user->mahasiswa->id;
 
-            $supervisiDosen = SupervisiMatkul::where('mahasiswa_id', $mhsId)
-                ->with('dosen')
-                ->get()
-                ->map(fn($s) => $s->dosen->nama_dosen ?? '-')
-                ->join(', ');
+        $supervisiDosen = SupervisiMatkul::where('mahasiswa_id', $mhsId)
+            ->with('dosen')
+            ->get()
+            ->map(fn($s) => $s->dosen->nama_dosen ?? '-')
+            ->join(', ');
 
-            $laporan = LaporanMkPpi::with('proyek')
-                ->where('mahasiswa_id', $mhsId)
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function($l) use ($supervisiDosen) {
-                    $l->dosenSupervisi = $supervisiDosen;
-                    return $l;
-                });
+        $laporan = LaporanMkPpi::with('proyek')
+            ->where('mahasiswa_id', $mhsId)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($l) use ($supervisiDosen) {
+                $l->dosenSupervisi = $supervisiDosen;
+                return $l;
+            });
 
-        } elseif ($user->isDosen()) {
-    // Ambil mahasiswa yang disupervisi dosen ini
-    $mahasiswaIds = SupervisiMatkul::where('dosen_id', $user->dosen->id)
-        ->pluck('mahasiswa_id');
+    } elseif ($user->isDosen()) {
+        $mahasiswaIds = SupervisiMatkul::where('dosen_id', $user->dosen->id)
+            ->pluck('mahasiswa_id');
 
-    $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
-        ->whereIn('mahasiswa_id', $mahasiswaIds)
-        ->orderBy('created_at', 'desc')
-        ->get();
-        }
+        $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
+            ->whereIn('mahasiswa_id', $mahasiswaIds)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return view('laporan.index', compact('laporan'));
+    } elseif ($user->isAdmin()) {
+        $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+    } elseif ($user->isManager()) {
+        // Laporan mahasiswa dari proyek yang dikelola manager ini
+        $mahasiswaIds = PengajuanProyek::where('manager_id', $user->id)
+            ->with('mahasiswa')
+            ->get()
+            ->flatMap(fn($p) => $p->mahasiswa->pluck('id'));
+
+        $laporan = LaporanMkPpi::with(['mahasiswa', 'proyek'])
+            ->whereIn('mahasiswa_id', $mahasiswaIds)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
+
+    return view('laporan.index', compact('laporan'));
+}
 
     public function create()
     {

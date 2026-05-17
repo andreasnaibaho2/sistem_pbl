@@ -21,8 +21,8 @@
             <div class="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center text-primary mb-4">
                 <span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 1">folder_open</span>
             </div>
-            <p class="text-slate-400 uppercase tracking-widest text-[10px] font-bold">Total Proyek</p>
-            <h3 class="text-3xl font-extrabold text-on-surface mt-1">{{ $totalProyek }}</h3>
+            <p class="text-slate-400 uppercase tracking-widest text-[10px] font-bold">Total Supervisi</p>
+<h3 class="text-3xl font-extrabold text-on-surface mt-1">{{ $supervisiList->count() }}</h3>
         </div>
 
         <div class="bg-white p-6 rounded-2xl border border-outline-variant/20 shadow-sm hover:-translate-y-0.5 transition-transform">
@@ -95,68 +95,67 @@
             </div>
         </div>
 
-        {{-- Proyek Aktif --}}
-        <div class="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h4 class="text-sm font-bold text-on-surface flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings:'FILL' 1">work</span>
-                    Proyek Aktif
-                </h4>
-                <span class="text-xs text-slate-400">{{ $totalProyek }} proyek</span>
+        {{-- Supervisi Aktif --}}
+<div class="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/20 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+        <h4 class="text-sm font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-lg" style="font-variation-settings:'FILL' 1">school</span>
+            Supervisi Aktif
+        </h4>
+        <span class="text-xs text-slate-400">{{ $supervisiList->count() }} mahasiswa</span>
+    </div>
+
+    @forelse($supervisiList as $supervisi)
+    <div class="px-6 py-4 border-b border-slate-50 hover:bg-slate-50/80 transition-colors last:border-0">
+        <div class="flex items-center gap-4">
+            {{-- Avatar --}}
+            <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-primary shrink-0 font-bold text-sm">
+                {{ strtoupper(substr($supervisi->mahasiswa->nama ?? '?', 0, 1)) }}
             </div>
 
-            @forelse($proyekList as $proyek)
-            <div class="px-6 py-4 border-b border-slate-50 hover:bg-slate-50/80 transition-colors last:border-0"
-                 x-data="{ open: false }">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-primary shrink-0">
-                        <span class="material-symbols-outlined text-xl" style="font-variation-settings:'FILL' 1">engineering</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-on-surface text-sm truncate">{{ $proyek->judul_proyek }}</p>
-                        <p class="text-xs text-slate-400 mt-0.5">
-                            Manager: {{ $proyek->manager->name ?? '-' }}
-                            · <span class="font-medium">{{ $proyek->mahasiswa->count() }} mahasiswa</span>
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-3 shrink-0">
-                        @if($proyek->mahasiswa->count() > 0)
-                        <button @click="open = !open"
-                                class="text-xs font-semibold text-slate-400 hover:text-primary flex items-center gap-0.5 transition-colors">
-                            <span class="material-symbols-outlined text-sm" x-text="open ? 'expand_less' : 'expand_more'">expand_more</span>
-                        </button>
-                        @endif
-                        <a href="{{ route('pengajuan_proyek.show', $proyek) }}"
-                           class="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5 whitespace-nowrap">
-                            Detail
-                            <span class="material-symbols-outlined text-sm">chevron_right</span>
-                        </a>
-                    </div>
-                </div>
+            {{-- Info Mahasiswa --}}
+            <div class="flex-1 min-w-0">
+                <p class="font-semibold text-on-surface text-sm truncate">
+                    {{ $supervisi->mahasiswa->nama ?? '-' }}
+                </p>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    {{ $supervisi->mahasiswa->nim ?? '-' }}
+                    @if($supervisi->mataKuliah)
+                    · <span class="font-medium text-primary">{{ $supervisi->mataKuliah->nama_matkul }}</span>
+                    @endif
+                </p>
+            </div>
 
-                {{-- Mahasiswa collapse --}}
-                @if($proyek->mahasiswa->count() > 0)
-                <div x-show="open" x-transition class="mt-3 ml-14 space-y-2">
-                    @foreach($proyek->mahasiswa as $mhs)
-                    <div class="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-2">
-                        <div class="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                            {{ strtoupper(substr($mhs->nama, 0, 1)) }}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-semibold text-on-surface truncate">{{ $mhs->nama }}</p>
-                            <p class="text-[10px] text-slate-400">{{ $mhs->nim }} · {{ labelProdi($mhs->pivot->prodi) }}</p>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                @endif
-            </div>
-            @empty
-            <div class="px-6 py-10 text-center text-slate-300 text-sm">
-                Belum ada proyek aktif.
-            </div>
-            @endforelse
+            {{-- Status Laporan --}}
+            @php
+                $laporanMhs = $laporanTerbaru->firstWhere('mahasiswa_id', $supervisi->mahasiswa_id);
+                $statusColor = 'bg-gray-50 text-gray-400';
+                $statusLabel = 'Belum ada laporan';
+                if ($laporanMhs) {
+                    $statusColor = match($laporanMhs->status_verifikasi) {
+                        'disetujui' => 'bg-teal-50 text-teal-700',
+                        'ditolak'   => 'bg-red-50 text-red-700',
+                        default     => 'bg-amber-50 text-amber-700',
+                    };
+                    $statusLabel = match($laporanMhs->status_verifikasi) {
+                        'disetujui' => 'Laporan Disetujui',
+                        'ditolak'   => 'Laporan Ditolak',
+                        default     => 'Laporan Menunggu',
+                    };
+                }
+            @endphp
+            <span class="text-[10px] font-bold px-3 py-1 rounded-full shrink-0 {{ $statusColor }}">
+                {{ $statusLabel }}
+            </span>
         </div>
+    </div>
+    @empty
+    <div class="px-6 py-10 text-center text-slate-300 text-sm">
+        <span class="material-symbols-outlined text-4xl block mb-2">school</span>
+        Belum ada mahasiswa yang disupervisi.
+    </div>
+    @endforelse
+</div>
     </div>
 
     {{-- LAPORAN TERBARU --}}

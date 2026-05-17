@@ -61,12 +61,35 @@
                 </div>
                 <div class="flex items-center gap-3 shrink-0">
     @if($entry->dokumentasi)
-<a href="{{ asset('storage/' . $entry->dokumentasi) }}" target="_blank"
-   title="Lihat dokumentasi"
-   class="material-symbols-outlined text-slate-400 hover:text-primary text-lg transition-colors">
-    attach_file
-</a>
-@endif
+    <a href="{{ asset('storage/' . $entry->dokumentasi) }}" target="_blank"
+       title="Lihat dokumentasi"
+       class="material-symbols-outlined text-slate-400 hover:text-primary text-lg transition-colors">
+        attach_file
+    </a>
+    @endif
+
+    {{-- Tombol Edit — hanya status pending --}}
+    @if($entry->status_verifikasi === 'pending')
+    <a href="{{ route('logbook_harian.edit', $entry) }}"
+       title="Edit logbook"
+       class="material-symbols-outlined text-slate-400 hover:text-amber-500 text-lg transition-colors">
+        edit
+    </a>
+    @endif
+
+    {{-- Tombol Hapus — hanya status pending --}}
+    @if($entry->status_verifikasi === 'pending')
+    <form method="POST" action="{{ route('logbook_harian.destroy', $entry) }}"
+        onsubmit="return confirm('Hapus logbook {{ $entry->hari }}, {{ $entry->tanggal->format('d M Y') }}?')">
+        @csrf
+        @method('DELETE')
+        <button type="submit" title="Hapus logbook"
+            class="material-symbols-outlined text-slate-400 hover:text-red-500 text-lg transition-colors bg-transparent border-0 cursor-pointer p-0">
+            delete
+        </button>
+    </form>
+    @endif
+
     <a href="{{ route('logbook_harian.show', $entry) }}" class="text-primary">
         <span class="material-symbols-outlined text-xl">chevron_right</span>
     </a>

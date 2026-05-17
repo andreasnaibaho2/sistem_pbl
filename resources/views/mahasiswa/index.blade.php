@@ -6,17 +6,46 @@
 <div class="flex items-center justify-between mb-8">
     <div>
         <h1 class="text-3xl font-black text-[#004d4d] tracking-tighter italic uppercase">
-    Master Data <span class="text-[#2dce89]">Mahasiswa</span>
-</h1>
-<p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
-    {{ $mahasiswas->count() }} mahasiswa terdaftar
-</p>
+            Master Data <span class="text-[#2dce89]">Mahasiswa</span>
+        </h1>
+        <p class="text-gray-400 text-xs font-bold mt-1 uppercase tracking-widest">
+            {{ $mahasiswas->count() }} mahasiswa terdaftar
+        </p>
     </div>
+    <div class="flex items-center gap-3">
+    <a href="{{ route('mahasiswa.batch.create') }}"
+       class="flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black hover:scale-105 transition-all shadow-lg text-[#004d4d]"
+       style="background:#7fffd4;">
+        <span class="material-symbols-outlined text-base">table_rows</span> Input Massal
+    </a>
     <a href="{{ route('mahasiswa.create') }}"
        class="flex items-center gap-2 px-5 py-3 bg-primary text-on-primary rounded-2xl text-xs font-black hover:opacity-90 hover:scale-105 transition-all shadow-lg">
         <span class="material-symbols-outlined text-base">person_add</span> Tambah Mahasiswa
     </a>
 </div>
+</div>
+
+{{-- FLASH MESSAGES --}}
+@if(session('success'))
+<div class="mb-6 px-5 py-4 rounded-2xl bg-green-50 border border-green-200 text-green-700 text-xs font-bold flex items-center gap-2">
+    <span class="material-symbols-outlined text-base">check_circle</span>
+    {{ session('success') }}
+</div>
+@endif
+
+@if(session('warnings'))
+<div class="mb-6 px-5 py-4 rounded-2xl bg-yellow-50 border border-yellow-200 text-yellow-700 text-xs font-bold">
+    <p class="font-black mb-1 flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">warning</span>
+        Beberapa baris dilewati:
+    </p>
+    <ul class="list-disc list-inside space-y-1 mt-1">
+        @foreach(session('warnings') as $w)
+        <li>{{ $w }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
 
 {{-- STAT CARDS --}}
 @php

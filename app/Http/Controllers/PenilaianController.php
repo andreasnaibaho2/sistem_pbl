@@ -36,7 +36,7 @@ class PenilaianController extends Controller
             $nilaiManager = PenilaianManager::where('mahasiswa_id', $mahasiswa->id)->first();
             $nilaiDosen   = PenilaianDosen::with('supervisiMatkul.mataKuliah')
                 ->where('mahasiswa_id', $mahasiswa->id)->get();
-            return view('penilaian.index_mahasiswa', compact('nilaiManager', 'nilaiDosen', 'mahasiswa'));
+            return view('mahasiswa.nilai', compact('nilaiManager', 'nilaiDosen', 'mahasiswa'));
 
         } else {
             // Admin — gabungkan per mahasiswa

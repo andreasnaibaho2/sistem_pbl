@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Dosen;
 use App\Models\User;
+use App\Imports\DosenImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DosenController extends Controller
 {
@@ -55,6 +57,53 @@ class DosenController extends Controller
         return redirect('/dosen')->with('success', 'Dosen ' . $request->nama_dosen . ' berhasil ditambahkan!');
     }
 
+    public function batchCreate()
+    {
+        return view('dosen.batch_create');
+    }
+
+    public function batchStore(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+        ], [
+            'file.required' => 'File wajib diupload.',
+            'file.mimes'    => 'Format file harus .xlsx, .xls, atau .csv.',
+            'file.max'      => 'Ukuran file maksimal 2MB.',
+        ]);
+
+        $import = new DosenImport();
+        Excel::import($import, $request->file('file'));
+
+        $message = "{$import->inserted} dosen berhasil ditambahkan.";
+
+        if (!empty($import->errors)) {
+            return redirect()->route('dosen.index')
+                ->with('success', $message)
+                ->with('warnings', $import->errors);
+        }
+
+        return redirect()->route('dosen.index')->with('success', $message);
+    }
+
+    public function downloadTemplate()
+    {
+        $filename = 'template_dosen.csv';
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['nidn', 'nama_dosen', 'email', 'akses_role']);
+            fputcsv($file, ['0012345678', 'Contoh Nama Dosen', 'dosen1@kampus.ac.id', 'dosen_pengampu']);
+            fputcsv($file, ['0087654321', 'Contoh Nama Lainnya', 'dosen2@kampus.ac.id', 'keduanya']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
     public function edit(Dosen $dosen)
     {
         return view('dosen.edit', compact('dosen'));
@@ -69,9 +118,6 @@ class DosenController extends Controller
         ]);
 
         $aksesRole = $request->akses_role;
-
-        // Jika keduanya, pertahankan role_aktif yang sedang berjalan
-        // Jika 1 akses, paksa role_aktif sesuai akses baru
         $roleAktifSekarang = $dosen->user->role_aktif ?? 'dosen_pengampu';
         $roleAktifBaru = match($aksesRole) {
             'dosen_pengampu' => 'dosen_pengampu',

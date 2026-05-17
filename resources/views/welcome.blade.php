@@ -394,7 +394,6 @@
         @endphp
 
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 relative">
-            <div class="hidden lg:block absolute top-[52px] left-[calc(12.5%+40px)] right-[calc(12.5%+40px)] h-px bg-gradient-to-r from-aqua-300/20 via-aqua-200/50 to-aqua-300/20 pointer-events-none"></div>
 
             @foreach($steps as $s)
             <div class="group">

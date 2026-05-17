@@ -13,10 +13,17 @@
                 {{ $matkuls->count() ?? 0 }} Mata Kuliah Terdaftar
             </p>
         </div>
-        <button onclick="openModal()"
-            class="flex items-center gap-2 px-6 py-3.5 bg-[#004d4d] text-[#7fffd4] rounded-2xl text-xs font-black hover:scale-105 transition-all shadow-xl shadow-teal-900/20">
-            <span class="material-symbols-outlined text-base">add</span> TAMBAH MATKUL
-        </button>
+        <div class="flex items-center gap-3">
+    <a href="{{ route('admin.matkul.batch.create') }}"
+        class="flex items-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-black hover:scale-105 transition-all"
+        style="background:#7fffd4; color:#004d4d;">
+        <span class="material-symbols-outlined text-base">upload_file</span> INPUT MASSAL
+    </a>
+    <button onclick="openModal()"
+        class="flex items-center gap-2 px-6 py-3.5 bg-[#004d4d] text-[#7fffd4] rounded-2xl text-xs font-black hover:scale-105 transition-all shadow-xl shadow-teal-900/20">
+        <span class="material-symbols-outlined text-base">add</span> TAMBAH MATKUL
+    </button>
+</div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

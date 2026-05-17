@@ -58,11 +58,12 @@
     </div>
 </div>
 
-{{-- FILTER PROYEK --}}
-<div class="mb-6">
-    <form method="GET" action="{{ route('laporan.admin') }}">
+{{-- FILTER BAR --}}
+<div class="flex items-center gap-3 mb-6 flex-wrap">
+    {{-- Filter Proyek (server-side, existing) --}}
+    <form method="GET" action="{{ route('laporan.admin') }}" id="formProyek">
         <select name="proyek_id" onchange="this.form.submit()"
-            class="px-5 py-3 rounded-2xl border border-outline-variant/20 bg-white text-sm font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+            class="px-5 py-3 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2dce89]/30 transition-all">
             <option value="">Semua Proyek</option>
             @foreach($proyekList as $p)
                 <option value="{{ $p->id }}" {{ $proyekId == $p->id ? 'selected' : '' }}>
@@ -71,34 +72,45 @@
             @endforeach
         </select>
     </form>
+
+    {{-- Search Nama / NIM (client-side) --}}
+    <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none">search</span>
+        <input type="text" id="searchMahasiswa" placeholder="Cari nama / NIM..."
+            class="pl-9 pr-4 py-3 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2dce89]/30 w-52 transition-all">
+    </div>
+
+    {{-- Filter Status (client-side) --}}
+    <select id="filterStatus"
+        class="px-5 py-3 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2dce89]/30 transition-all">
+        <option value="">Semua Status</option>
+        <option value="selesai">Selesai</option>
+        <option value="berjalan">Berjalan</option>
+        <option value="belum mulai">Belum Mulai</option>
+    </select>
+
+    {{-- Badge hasil filter --}}
+    <span id="resultCount" class="text-xs font-black text-gray-400 italic hidden"></span>
 </div>
 
 {{-- TABEL MONITORING --}}
-<div class="bg-white rounded-[2rem] shadow-sm border border-outline-variant/20 overflow-hidden">
+<div class="bg-white rounded-[2rem] shadow-sm border border-gray-200 overflow-hidden">
     <table class="w-full text-left">
         <thead>
-            <tr class="border-b border-outline-variant/10 bg-surface-container-low/40">
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline w-10">#</th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Mahasiswa</th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline">Proyek</th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">
+            <tr class="border-b border-gray-100 bg-gray-50/40">
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 w-10">#</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Mahasiswa</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Proyek</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">
                     Logbook<br><span class="normal-case font-medium text-[9px]">Mingguan</span>
                 </th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">
-                    Harian
-                </th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">
-                    Laporan
-                </th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline">
-                    Progress Logbook
-                </th>
-                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-outline text-center">
-                    Status
-                </th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Harian</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Laporan</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Progress Logbook</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Status</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-outline-variant/10">
+        <tbody id="monitoringTableBody" class="divide-y divide-gray-50">
             @forelse($mahasiswaProgress as $i => $m)
             @php
                 $statusColor = match($m->status) {
@@ -113,45 +125,48 @@
                     default    => '#e0e0e0',
                 };
             @endphp
-            <tr class="hover:bg-surface-container-lowest transition-colors">
-                <td class="px-6 py-5 text-[10px] font-black text-outline/40">{{ $i + 1 }}</td>
+            <tr class="hover:bg-teal-50/20 transition-colors monitoring-row"
+                data-nama="{{ strtolower($m->nama) }}"
+                data-nim="{{ $m->nim }}"
+                data-status="{{ strtolower($m->status) }}">
+                <td class="px-6 py-5 text-[10px] font-black text-gray-300">{{ $i + 1 }}</td>
 
                 {{-- Mahasiswa --}}
                 <td class="px-6 py-5">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center font-black text-xs text-primary shrink-0">
+                        <div class="w-9 h-9 rounded-xl bg-teal-100 flex items-center justify-center font-black text-xs text-[#004d4d] shrink-0">
                             {{ strtoupper(substr($m->nama, 0, 2)) }}
                         </div>
                         <div>
-                            <p class="font-black text-on-surface text-sm">{{ $m->nama }}</p>
-                            <p class="text-[10px] text-outline font-medium">{{ $m->nim }} · {{ $m->prodi }}</p>
+                            <p class="font-black text-gray-800 text-sm">{{ $m->nama }}</p>
+                            <p class="text-[10px] text-gray-400 font-medium">{{ $m->nim }} · {{ $m->prodi }}</p>
                         </div>
                     </div>
                 </td>
 
                 {{-- Proyek --}}
                 <td class="px-6 py-5">
-                    <p class="text-sm font-medium text-on-surface-variant">{{ $m->proyek }}</p>
+                    <p class="text-sm font-medium text-gray-600">{{ $m->proyek }}</p>
                 </td>
 
                 {{-- Logbook Mingguan --}}
                 <td class="px-6 py-5 text-center">
                     <span class="font-black text-sm" style="color:#004d4d;">{{ $m->logbook_verified }}</span>
-                    <span class="text-outline/40 text-xs font-bold"> / {{ $m->total_logbook }}</span>
-                    <p class="text-[9px] text-outline/50 mt-0.5">verified</p>
+                    <span class="text-gray-300 text-xs font-bold"> / {{ $m->total_logbook }}</span>
+                    <p class="text-[9px] text-gray-400 mt-0.5">verified</p>
                 </td>
 
                 {{-- Harian --}}
                 <td class="px-6 py-5 text-center">
-                    <span class="font-black text-sm text-on-surface-variant">{{ $m->total_harian }}</span>
-                    <p class="text-[9px] text-outline/50 mt-0.5">entri</p>
+                    <span class="font-black text-sm text-gray-600">{{ $m->total_harian }}</span>
+                    <p class="text-[9px] text-gray-400 mt-0.5">entri</p>
                 </td>
 
                 {{-- Laporan --}}
                 <td class="px-6 py-5 text-center">
                     <span class="font-black text-sm" style="color:#2dce89;">{{ $m->laporan_verified }}</span>
-                    <span class="text-outline/40 text-xs font-bold"> / {{ $m->total_laporan }}</span>
-                    <p class="text-[9px] text-outline/50 mt-0.5">verified</p>
+                    <span class="text-gray-300 text-xs font-bold"> / {{ $m->total_laporan }}</span>
+                    <p class="text-[9px] text-gray-400 mt-0.5">verified</p>
                 </td>
 
                 {{-- Progress Bar --}}
@@ -161,7 +176,7 @@
                             <div class="h-full rounded-full transition-all"
                                 style="width:{{ $m->progress_logbook }}%; background:{{ $barColor }};"></div>
                         </div>
-                        <span class="text-[10px] font-black text-outline w-8 text-right">{{ $m->progress_logbook }}%</span>
+                        <span class="text-[10px] font-black text-gray-400 w-8 text-right">{{ $m->progress_logbook }}%</span>
                     </div>
                 </td>
 
@@ -175,13 +190,63 @@
             @empty
             <tr>
                 <td colspan="8" class="px-6 py-16 text-center">
-                    <span class="material-symbols-outlined text-5xl text-outline-variant/40 block mb-3">monitoring</span>
-                    <p class="text-on-surface-variant/40 font-black italic text-sm">Belum ada data aktivitas.</p>
+                    <span class="material-symbols-outlined text-5xl text-gray-200 block mb-3">monitoring</span>
+                    <p class="text-gray-400 font-black italic text-sm">Belum ada data aktivitas.</p>
                 </td>
             </tr>
             @endforelse
         </tbody>
     </table>
+
+    {{-- Empty state filter --}}
+    <div id="noResultMonitoring" class="hidden px-6 py-16 text-center">
+        <span class="material-symbols-outlined text-5xl text-gray-200 block mb-3">search_off</span>
+        <p class="text-gray-400 font-black italic text-sm uppercase">Tidak ada hasil yang cocok.</p>
+    </div>
 </div>
+
+<script>
+(function () {
+    const searchInput = document.getElementById('searchMahasiswa');
+    const statusSelect = document.getElementById('filterStatus');
+    const rows = document.querySelectorAll('.monitoring-row');
+    const noResult = document.getElementById('noResultMonitoring');
+    const resultCount = document.getElementById('resultCount');
+
+    function applyFilter() {
+        const keyword = searchInput.value.toLowerCase().trim();
+        const status  = statusSelect.value.toLowerCase();
+        let visible   = 0;
+
+        rows.forEach(row => {
+            const nama      = row.dataset.nama   || '';
+            const nim       = row.dataset.nim    || '';
+            const rowStatus = row.dataset.status || '';
+
+            const matchSearch = !keyword || nama.includes(keyword) || nim.includes(keyword);
+            const matchStatus = !status  || rowStatus === status;
+
+            if (matchSearch && matchStatus) {
+                row.classList.remove('hidden');
+                visible++;
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        noResult.classList.toggle('hidden', visible > 0);
+
+        if (keyword || status) {
+            resultCount.textContent = visible + ' hasil';
+            resultCount.classList.remove('hidden');
+        } else {
+            resultCount.classList.add('hidden');
+        }
+    }
+
+    searchInput.addEventListener('input', applyFilter);
+    statusSelect.addEventListener('change', applyFilter);
+})();
+</script>
 
 @endsection

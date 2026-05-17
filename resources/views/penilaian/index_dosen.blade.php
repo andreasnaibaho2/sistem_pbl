@@ -35,6 +35,9 @@
                     </td>
                     <td class="px-5 py-3 text-center">
                         <span class="font-bold text-teal-700 text-base">{{ number_format($p->nilai_dosen, 1) }}</span>
+<span class="block text-[10px] text-gray-400 font-medium">
+    / 45 &nbsp;(≈ {{ number_format($p->nilai_dosen > 0 ? $p->nilai_dosen / 45 * 100 : 0, 1) }}/100)
+</span>
                     </td>
                     <td class="px-5 py-3 text-center">
                         <span class="bg-teal-100 text-teal-700 text-xs font-semibold px-2 py-1 rounded-full">Selesai</span>
